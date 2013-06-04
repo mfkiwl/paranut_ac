@@ -297,4 +297,3 @@ void MParanut::InterconnectMethod () {
   for (n = 0; n < CPU_CORES; n++)
     wp_direct[n] = (cache_enable == 0 || !AdrIsCached (wp_adr[n]));
 }
-

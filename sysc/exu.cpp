@@ -263,12 +263,13 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
     case afAdc:
     case afSub:
       if (aluFunc != afSub) result = ('0', inA) + ('0', inB);
-      else result = ('0', inA) + ('0', -inB);
+      else result = ('0', inA) - ('0', inB);
       if (aluFunc == afAdc) result += regCY;
   
       outRegD = result.range (31, 0);
       outCY = result [32];
       outOV = (inA[31] & inB[31] & ~outRegD[31]) | (~inA[31] & ~inB[31] & outRegD[31]);
+      // FIXME: OV for subtraction not correct; need to use 2s complement of 'inB' instead of 'inB'
   
       // compute comparison flag 'outFlag'...
       zero = (outRegD == 0);
