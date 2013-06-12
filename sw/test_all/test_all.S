@@ -1,10 +1,8 @@
 .section .text
 
 .global _start
+.global done
 
-# NOTE: or32-elf-as (GNU Binutils 2.18.50.20080506) does not assemble load/store instructions correctly:
-#   - Labels for the adress offsets are only accepted with the lo() operation.
-#   - Offsets >= 0x800 are not put into the correct fields, leading to incorrect instructions.
 
 #define R0 0
 #define R1 1
@@ -45,6 +43,36 @@
         # 111110 iiiii aaaaa ---01 i ii iiii iiii         # cache invalidate
 #define PN_CFLUSH(BASE, REG)       .word (0xf8001800 | ((REG) << 16) | ((BASE) & 0x7ff) | (((BASE) & 0xf800) << 10))
         # 111110 iiiii aaaaa ---11 i ii iiii iiii         # cache flush
+
+
+### Workaround macros
+# NOTE: or32-elf-as (or32-elf-1.0rc1) does not assemble load/store instructions correctly:
+#   - Labels for the adress offsets are accepted with the lo() operation, but lead to incorrect register operands..
+#   - Offsets >= 0x800 are not put into the correct fields, leading to incorrect instructions.
+# 
+# The following macros work around these bugs and generate correct or1k instructions.
+
+_zero:		.org 0
+
+#define PN_SW(I, RA, RB)  	   .word (0xd4000000 | ((((I)-_zero) & 0xf800) << 10) | (((I)-_zero) & 0x7ff) | ((RA) << 16) | ((RB) << 11))
+	# 110101 iiiii aaaaa bbbbb i ii iiii iiii
+#define PN_SH(I, RA, RB)  	   .word (0xdc000000 | ((((I)-_zero) & 0xf800) << 10) | (((I)-_zero) & 0x7ff) | ((RA) << 16) | ((RB) << 11))
+	# 110111 iiiii aaaaa bbbbb i ii iiii iiii
+#define PN_SB(I, RA, RB)  	   .word (0xd8000000 | ((((I)-_zero) & 0xf800) << 10) | (((I)-_zero) & 0x7ff) | ((RA) << 16) | ((RB) << 11))
+	# 110110 iiiii aaaaa bbbbb i ii iiii iiii
+
+#define PN_LWZ(RD, I, RA)  	   .word (0x84000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100001 ddddd aaaaa iiiii i ii iiii iiii
+#define PN_LWS(RD, I, RA)  	   .word (0x88000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100010 ddddd aaaaa iiiii i ii iiii iiii
+#define PN_LHZ(RD, I, RA)  	   .word (0x94000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100101 ddddd aaaaa iiiii i ii iiii iiii
+#define PN_LHS(RD, I, RA)  	   .word (0x98000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100110 ddddd aaaaa iiiii i ii iiii iiii
+#define PN_LBZ(RD, I, RA)  	   .word (0x8c000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100011 ddddd aaaaa iiiii i ii iiii iiii
+#define PN_LBS(RD, I, RA)  	   .word (0x90000000 | (((I)-_zero) & 0xffff) | ((RD) << 21) | ((RA) << 16))
+	# 100100 ddddd aaaaa iiiii i ii iiii iiii
 
 
 
@@ -99,7 +127,8 @@ go_ahead:       l.nop 0x0
                 .global load_store
 load_store:     l.movhi r2, 0xcafe
                 l.ori   r2, r2, 0xbabe
-                l.sw    lo(result) (r0), r2     # FIXME: This is assembled as "l.sw    lo(result) (r0), r2" !! (see above)
+#                l.sw    result-_zero (r0), r2     # FIXME: This is assembled as "l.sw    lo(result) (r0), r0" !! (see above)
+		PN_SW (result, R0, R2)
 
                 # Load...
                 l.movhi r1, hi(result)
@@ -107,12 +136,12 @@ load_store:     l.movhi r2, 0xcafe
                 l.lwz   r1, 0 (r1)     # r1 = 0xcafebabe
                 l.xor   r3, r1, r2
 
-                l.lhs   r4, lo(result) (r0)     # r4 = 0xffffcafe
+                PN_LHS	(R4, result, R0) #l.lhs   r4, lo(result) (r0)     # r4 = 0xffffcafe
                 l.movhi r2, 0xffff
                 l.ori   r2, r2, 0xcafe
                 l.xor   r5, r4, r2
                 l.or    r3, r3, r5
-                l.lhz   r5, lo(result+2) (r0)   # r5 = 0x0000babe
+                PN_LHZ	(R5, result+2, R0) #l.lhz   r5, lo(result+2) (r0)   # r5 = 0x0000babe
                 l.movhi r2, 0
                 l.ori   r2, r2, 0xbabe
                 l.xor   r5, r5, r2
@@ -140,22 +169,22 @@ load_store:     l.movhi r2, 0xcafe
                 l.xor   r4, r14, r15
                 l.or    r3, r3, r4
 
-                l.sw    lo(load_ok) (r0), r3
+		PN_SW (load_ok, R0, R3)		#l.sw    lo(load_ok) (r0), r3
                 
                 # Store half word and byte...
                 l.movhi r7, hi(store_ok)
                 l.ori   r7, r7, lo(store_ok)
                 l.ori   r4, r0, 0xdead
-                l.sh    lo(store_ok) (r0), r4
+                PN_SH	(store_ok, R0, R4)	#l.sh    lo(store_ok) (r0), r4
                 l.ori   r5, r0, 0xbeef
                 l.sh    2 (r7), r5
-                l.lwz   r6, lo(store_ok) (r0)   # 0xdeadbeef
+                PN_LWZ	(R6, store_ok, R0)	#l.lwz   r6, lo(store_ok) (r0)   # 0xdeadbeef
                 l.movhi r3, 0xdead
                 l.ori   r3, r3, 0xbeef
                 l.xor   r3, r3, r6
 
                 l.ori   r8, r0, 0x12
-                l.sb    lo(store_ok) (r0), r8
+                PN_SB	(store_ok, R0, R8)	# l.sb    lo(store_ok) (r0), r8
                 l.ori   r9, r0, 0x34
                 l.sb    1 (r7), r9
                 l.ori   r10, r0, 0x56
@@ -168,7 +197,7 @@ load_store:     l.movhi r2, 0xcafe
                 l.xor   r13, r13, r12
                 l.or    r3, r3, r13
 
-                l.sw    lo(store_ok) (r0), r3   # 0
+		PN_SW	(store_ok, R0, R3)	#l.sw    lo(store_ok) (r0), r3   # 0
 
 
 
@@ -197,7 +226,8 @@ alu_imm:        l.ori     r3, r0, 0x1234
                 l.addic   r2, r2, 0x7000  # 0xffffea08 (Carry is reset)
                 l.addic   r2, r2, 0x15f8  # 0x0000 (Carry is set)
                 l.or      r1, r1, r2
-                l.sw      lo(alu_imm_ok) (r0), r1
+                PN_SW	(alu_imm_ok, R0, R1)
+                #l.sw      lo(alu_imm_ok) (r0), r1
 
                 # with register operands: check against immediate counterparts...
                 .global alu_reg
@@ -208,11 +238,13 @@ alu_reg:        l.ori     r10, r0, 0x2326
                 l.add     r14, r3, r10  # 0x355a, Carry := 0
                 l.addc    r14, r14, r0  # 0x355a
                 l.xor     r1, r14, r4
-                l.sub     r14, r3, r11  # 0x0f0e, Carry := 1
+                l.sub     r14, r3, r11  # 0x0f0e, Carry := 0
                 l.addc    r14, r14, r0  # 0x0f0f, Carry := 0
-                l.addi    r14, r14, -1  # 0x0f0e
                 l.xor     r2, r14, r5
                 l.or      r1, r1, r2
+		l.sub	  r14, r0, r10	# -0x2326, Carry := 1
+                l.addic	  r14, r14, 0x2325
+                l.or	  r1, r1, r14
                 l.and     r14, r3, r10  # 0x0224
                 l.xor     r2, r14, r6
                 l.or      r1, r1, r2
@@ -225,7 +257,7 @@ alu_reg:        l.ori     r10, r0, 0x2326
                 l.mul     r14, r3, r13  # 0xffff37c4
                 l.xor     r2, r14, r9
                 l.or      r1, r1, r2
-                l.sw      lo(alu_reg_ok) (r0), r1
+                PN_SW	  (alu_reg_ok, R0, R1)	#l.sw      lo(alu_reg_ok) (r0), r1
 
                 # test sign/zero extension...
                 .global alu_ext
@@ -239,7 +271,8 @@ alu_ext:        l.xori    r3, r0, -1      # 0xffffffff
                 l.muli    r7, r3, -1      # 0x00000001
                 l.xori    r2, r7, 1
                 l.or      r1, r1, r2
-                l.sw      lo(alu_ext_ok) (r0), r1
+                PN_SW	(alu_ext_ok, R0, R1)
+                #l.sw      lo(alu_ext_ok) (r0), r1
 
                 # shifts...
                 .global alu_shift
@@ -274,7 +307,8 @@ alu_shift:      l.ori     r1, r0, 1
                 l.movhi   r2, 0x809f
                 l.ori     r2, r2, 0xdc20
                 l.xor     r1, r1, r2
-                l.sw      lo(alu_shift_ok) (r0), r1
+                PN_SW	(alu_shift_ok, R0, R1)		
+                #l.sw      lo(alu_shift_ok) (r0), r1
 
                 # cmov, sfxxx ...
                 .global alu_comp
@@ -407,7 +441,8 @@ alu_comp:       l.ori     r1, r0, 1
                 l.or      r5, r5, r4
                 l.sfles   r0, r1      # less (both unsigned and signed)
                 l.cmov    r4, r0, r2
-                l.or      r5, r5, r4
+    
+            l.or      r5, r5, r4
                 l.sfles   r1, r0      # greater (both unsigned and signed)
                 l.cmov    r4, r2, r0
                 l.or      r5, r5, r4
@@ -415,7 +450,8 @@ alu_comp:       l.ori     r1, r0, 1
                 l.cmov    r4, r0, r2
                 l.or      r5, r5, r4
 
-                l.sw      lo(alu_comp_ok) (r0), r5
+                PN_SW	(alu_comp_ok, R0, R5)
+                #l.sw      lo(alu_comp_ok) (r0), r5
 
                 # sfxxxi ...
                 .global alu_comp_imm
@@ -556,7 +592,8 @@ alu_comp_imm:   l.ori     r1, r0, 17
                 l.cmov    r4, r0, r2
                 l.or      r5, r5, r4
 
-                l.sw      lo(alu_comp_imm_ok) (r0), r5
+                PN_SW	(alu_comp_imm_ok, R0, R5)
+                #l.sw      lo(alu_comp_imm_ok) (r0), r5
 
 
 
@@ -629,7 +666,8 @@ cont_09:        l.bf      cont_10
                 l.xori    r2, r2, 32
 cont_10:        l.or      r1, r1, r2
 
-                l.sw      lo(jump_ok) (r0), r1
+                PN_SW	(jump_ok, R0, R1)
+                #l.sw      lo(jump_ok) (r0), r1
         
 
 ### Syscall (TBD) ...
@@ -643,4 +681,4 @@ cont_10:        l.or      r1, r1, r2
 #                l.bnf   loop_1
 #                l.addi  r1, r1, 4
                 
-stop:           l.nop 0x1  # HALT
+done:            l.nop 0x1  # HALT

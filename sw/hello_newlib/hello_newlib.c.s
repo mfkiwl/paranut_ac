@@ -391,53 +391,53 @@
  370      69676E65 
  370      6420696E 
  370      7400
- 371              	.LASF12:
- 372 0032 2F6D6564 		.string	"/media/sync/default/projekte.sync/paranut.sync/src/sw/hello_newlib"
- 372      69612F73 
- 372      796E632F 
- 372      64656661 
- 372      756C742F 
+ 371              	.LASF11:
+ 372 0032 68656C6C 		.string	"hello_newlib.c"
+ 372      6F5F6E65 
+ 372      776C6962 
+ 372      2E6300
  373              	.LASF7:
- 374 0075 6C6F6E67 		.string	"long long unsigned int"
+ 374 0041 6C6F6E67 		.string	"long long unsigned int"
  374      206C6F6E 
  374      6720756E 
  374      7369676E 
  374      65642069 
- 375              	.LASF2:
- 376 008c 756E7369 		.string	"unsigned char"
- 376      676E6564 
- 376      20636861 
- 376      7200
- 377              	.LASF9:
- 378 009a 63686172 		.string	"char"
- 378      00
- 379              	.LASF8:
- 380 009f 6C6F6E67 		.string	"long int"
- 380      20696E74 
+ 375              	.LASF12:
+ 376 0058 2F686F6D 		.string	"/home/gundolf/hsa/paranut/src/sw/hello_newlib"
+ 376      652F6775 
+ 376      6E646F6C 
+ 376      662F6873 
+ 376      612F7061 
+ 377              	.LASF2:
+ 378 0086 756E7369 		.string	"unsigned char"
+ 378      676E6564 
+ 378      20636861 
+ 378      7200
+ 379              	.LASF9:
+ 380 0094 63686172 		.string	"char"
  380      00
- 381              	.LASF3:
- 382 00a8 73686F72 		.string	"short int"
- 382      7420696E 
- 382      7400
- 383              	.LASF11:
- 384 00b2 68656C6C 		.string	"hello_newlib.c"
- 384      6F5F6E65 
- 384      776C6962 
- 384      2E6300
- 385              	.LASF4:
- 386 00c1 73686F72 		.string	"short unsigned int"
- 386      7420756E 
- 386      7369676E 
- 386      65642069 
- 386      6E7400
- 387              	.LASF1:
- 388 00d4 7369676E 		.string	"signed char"
- 388      65642063 
- 388      68617200 
+ 381              	.LASF8:
+ 382 0099 6C6F6E67 		.string	"long int"
+ 382      20696E74 
+ 382      00
+ 383              	.LASF4:
+ 384 00a2 73686F72 		.string	"short unsigned int"
+ 384      7420756E 
+ 384      7369676E 
+ 384      65642069 
+ 384      6E7400
+ 385              	.LASF1:
+ 386 00b5 7369676E 		.string	"signed char"
+ 386      65642063 
+ 386      68617200 
+ 387              	.LASF3:
+ 388 00c1 73686F72 		.string	"short int"
+ 388      7420696E 
+ 388      7400
  389              	.LASF10:
- 390 00e0 474E5520 		.string	"GNU C 4.5.1-or32-1.0rc1"
+ 390 00cb 474E5520 		.string	"GNU C 4.5.1-or32-1.0rc4"
  390      4320342E 
  390      352E312D 
  390      6F723332 
  390      2D312E30 
- 391              		.ident	"GCC: (OpenRISC 32-bit toolchain for or32-elf (built 20110123)) 4.5.1-or32-1.0rc1"
+ 391              		.ident	"GCC: (OpenRISC 32-bit toolchain for or32-elf (built 20110410)) 4.5.1-or32-1.0rc4"
