@@ -1,5 +1,5 @@
-CFLAGS = -g -O3 -I/usr/include/systemc-2.2 -fpermissive -m32 # -Wfatal-errors
-LDFLAGS = -lsystemc-2.2 -m32 # -Wfatal-errors
+CFLAGS = -g -O3 -I/opt/systemc-2.3.0/include # -Wfatal-errors
+LDFLAGS = -L/opt/systemc-2.3.0/lib-linux64 -lsystemc-2.3.0 # -Wfatal-errors
 
 MEMU_TB_SRC = base.cpp lfsr.cpp memu.cpp memory.cpp uart16450.cpp peripherals.cpp memu_tb.cpp
 MEMU_TB_OBJ = base.o lfsr.o memu.o memory.o uart16450.o peripherals.o memu_tb.o
@@ -28,7 +28,7 @@ sim: paranut_tb test_app
 
 test_app:
 	@echo; echo "### Making test application"; echo
-	+make -C $(TEST_APP_DIR) $(TEST_APP)
+	+make -C $(TEST_APP_DIR) $(TEST_APP)       
 
 depend:
 	makedepend -Y $(PARANUT_TB_SRC) $(MEMU_TB_SRC) # -- $(CFLAGS) -- $(PN_SRC) $(MEMU_TB_SRC)

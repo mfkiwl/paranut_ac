@@ -487,7 +487,7 @@ END
 SEC "Load \& Store Instructions"
 
 INS l.lwz "Load Word and Extend with Zero"
-COD 100001 ddddd aaaaa iiiii i ii iiii iiii         
+COD 100001 ddddd aaaaa iiiii i ii iiii iiii
 FMT "l.lwz rD, I(rA)" # load word & zero-extend
 DES "A word is loaded from memory and placed into register rD. The effective address is determined by adding the contents of rA to the sign-extended immediate value I."
 DE_ "{\em Note:} For \paranut, the instructions l.lwz and l.lws are equivalent."
@@ -554,7 +554,7 @@ EXC "TLB miss \\\\ Page fault \\\\ Bus error"
 END
 
 INS l.sw "Store Half Word"
-COD 110111 iiiii aaaaa bbbbb i ii iiii iiii         
+COD 110111 iiiii aaaaa bbbbb i ii iiii iiii
 FMT "l.sh I(rA), rB"  # store half word
 DES "The low-order bits of register rB are stored as a half word. The effective address is determined by adding the contents of rA to the sign-extended immediate value I."
 OPE "Mem (rA + exts(I)) <- rB[15:0]"

@@ -30,7 +30,7 @@ sc_signal<bool> clk, reset;
 // WB / memory...
 sc_signal<bool> wb_cyc, wb_stb, wb_we, wb_ack, wb_err, wb_rty;
 sc_signal<sc_uint<4> > wb_sel;
-sc_signal<sc_uint<32> > wb_adr, wb_dat_w, wb_dat_r;
+sc_signal<TWord> wb_adr, wb_dat_w, wb_dat_r;
 
 // CPU - Read ports...
 sc_signal<bool> rp_rd [RPORTS], rp_direct [RPORTS];

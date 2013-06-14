@@ -77,6 +77,8 @@ bool CMemory::ReadFile  (char *filename) {
   int i, j, sectsize, len;
   TWord adr;
 
+  printf ("### sizeof (elfhdr) = %i\n", sizeof (elfhdr));
+
   if (labelList) {
     free (labelList);
     labels = 0;
@@ -88,14 +90,17 @@ bool CMemory::ReadFile  (char *filename) {
   if (fread (&elfhdr, sizeof (elfhdr), 1, inputfs) != 1)
     return false;
 
+  puts ("...");
   if ((elf_shdata =
        (struct elf32_shdr *) malloc (ELF_SHORT_H (elfhdr.e_shentsize) *
                                      ELF_SHORT_H (elfhdr.e_shnum))) == NULL)
     return false;
 
+  puts ("...");
   if (fseek (inputfs, ELF_LONG_H (elfhdr.e_shoff), SEEK_SET) != 0)
     return false;
 
+  // printf ("# elfhdr.e_shentsize = %i, elfhdr.e_shnum = %i\n", elfhdr.e_shentsize, elfhdr.e_shnum);
   if (fread (elf_shdata, ELF_SHORT_H (elfhdr.e_shentsize) * ELF_SHORT_H (elfhdr.e_shnum), 1, inputfs) != 1)
     return false;
 

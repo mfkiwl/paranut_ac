@@ -148,7 +148,7 @@ int sc_main (int argc, char *argv []) {
 
   if (tf) sc_close_vcd_trace_file (tf);
 
-  // memory.Dump (0x700, 0xfff);   // for "test_all.S"
+  memory.Dump (0x700, 0xfff);   // for "test_all.S"
 
   return 0;
 }

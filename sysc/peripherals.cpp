@@ -37,7 +37,7 @@ void MPeripherals::MainThread (void) {
         sel = sel_i.read ();
         if (WRITE_DELAY > 0) wait (WRITE_DELAY);
 	if (uart && uart->IsAdressed (adr)) {
-	  //INFOF (("UART: Write (%08x, %08x)", adr, val));
+          //INFOF (("UART: Write (%08x, %08x) [%x]", adr, val, sel));
           for (n = 0; n < 4; n++)
             if (sel & (1 << n)) uart->WriteByte (adr + n, (val >> (24-8*n)) & 0xff);
           ack_o = 1;
@@ -65,6 +65,7 @@ void MPeripherals::MainThread (void) {
         if (uart && uart->IsAdressed (adr)) {
           for (n = 0; n < 4; n++)
             if (sel & (1 << n)) val |= uart->ReadByte (adr + n) << (24-8*n);
+	  //INFOF (("UART: Read (%08x, %08x) [%x]", adr, val, sel));
           dat_o = val;
           ack_o = 1;
         }

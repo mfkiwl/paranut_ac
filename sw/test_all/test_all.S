@@ -441,8 +441,7 @@ alu_comp:       l.ori     r1, r0, 1
                 l.or      r5, r5, r4
                 l.sfles   r0, r1      # less (both unsigned and signed)
                 l.cmov    r4, r0, r2
-    
-            l.or      r5, r5, r4
+                l.or      r5, r5, r4
                 l.sfles   r1, r0      # greater (both unsigned and signed)
                 l.cmov    r4, r2, r0
                 l.or      r5, r5, r4

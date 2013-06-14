@@ -2,7 +2,7 @@ CC = or32-elf-gcc
 
 CFLAGS = -g -O2 -Wa,-alhn=$<.s
 #LDFLAGS = -mor32-newlib-uart 
-LDFLAGS = -mnewlib -mboard=or1ksim-uart
+LDFLAGS = -mnewlib -mboard=or1ksim-uart  # orpsocrefdesign
 
 hello_newlib: hello_newlib.o
 	$(CC) -o $@ $< $(LDFLAGS)

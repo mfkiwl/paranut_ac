@@ -216,10 +216,10 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
   // Return value: Number of required clock cycles
 
   sc_uint<5> d = insn.range (25, 21), a = insn.range (20, 16), b = insn.range (15, 11);
-  sc_uint<32> inA, inB, outRegD;
+  sc_uint<32> inA, inB, outRegD, minusInB;
   bool outCY = 0, outOV = 0, outF = 0, haveCyOv = 0;
   bool zero, lt;
-  sc_uint<64> result;
+  sc_uint<33> result, signedB;
   int retDelay, n;
 
   retDelay = DELAY_ALU;
@@ -262,19 +262,19 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
     case afAdd:
     case afAdc:
     case afSub:
-      if (aluFunc != afSub) result = ('0', inA) + ('0', inB);
-      else result = ('0', inA) - ('0', inB);
+      if (aluFunc != afSub) signedB = ('0', inB);
+      else signedB = -('0', inB);
+      result = ('0', inA) + signedB;
       if (aluFunc == afAdc) result += regCY;
   
       outRegD = result.range (31, 0);
       outCY = result [32];
-      outOV = (inA[31] & inB[31] & ~outRegD[31]) | (~inA[31] & ~inB[31] & outRegD[31]);
-      // FIXME: OV for subtraction not correct; need to use 2s complement of 'inB' instead of 'inB'
+      outOV = (inA[31] & signedB[31] & ~outRegD[31]) | (~inA[31] & ~signedB[31] & outRegD[31]);
   
       // compute comparison flag 'outFlag'...
       zero = (outRegD == 0);
-      if (d[3]) lt = (!outCY & !(inA[31] ^ inB[31])) | (inA[31] & !inB[31]);   // "less than" for signed comparison
-      else      lt = !outCY;                                                // "less than" for unsigned comparison
+      if (d[3]) lt = (outCY & !(inA[31] ^ inB[31])) | (inA[31] & !inB[31]);   // "less than" for signed comparison
+      else      lt = outCY;                                                // "less than" for unsigned comparison
       if (d <= 1)                 // ==, !=
         outF = (d[0] ^ zero);
       else {                      // other cases
@@ -283,7 +283,7 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
         if (d[1] != d[0]) outF = outF ^ zero;  // "less or equal" and "greater than"
       }
       haveCyOv = 1;
-      //INFOF (("Comparing 0x%x and 0x%x: zero = %i, C = %i, F = %i", (int) inA, (int) inB, (int) zero, (int) outCY, (int) outF));
+      // INFOF (("Comparing 0x%x and 0x%x: zero = %i, C = %i, F = %i", (int) inA, (int) inB, (int) zero, (int) outCY, (int) outF));
       break;
 
     // Logical...

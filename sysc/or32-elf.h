@@ -1,6 +1,8 @@
 #ifndef _LINUX_ELF_H
 #define _LINUX_ELF_H
 
+#include <stdint.h>
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -20,19 +22,11 @@
                          (((unsigned long)(ps) << 24) & 0xff000000))
 #endif
 
-#ifdef OR32_TYPES
 typedef uint32_t     Elf32_Addr;
 typedef uint16_t     Elf32_Half;
 typedef uint32_t     Elf32_Off;
 typedef int32_t      Elf32_Sword;
 typedef uint32_t     Elf32_Word;
-#else
-typedef unsigned long   Elf32_Addr;
-typedef unsigned short  Elf32_Half;
-typedef unsigned long   Elf32_Off;
-typedef long            Elf32_Sword;
-typedef unsigned long   Elf32_Word;
-#endif
 
 /* These constants are for the segment types stored in the image headers */
 #define PT_NULL    0
@@ -259,7 +253,7 @@ typedef struct elf32_hdr{
   Elf32_Half	e_shentsize;
   Elf32_Half	e_shnum;
   Elf32_Half	e_shstrndx;
-} Elf32_Ehdr;
+} __attribute((packed)) Elf32_Ehdr;
 
 typedef struct elf64_hdr {
   unsigned char	e_ident[16];		/* ELF "magic number" */
@@ -293,7 +287,7 @@ typedef struct elf32_phdr{
   Elf32_Word	p_memsz;
   Elf32_Word	p_flags;
   Elf32_Word	p_align;
-} Elf32_Phdr;
+} __attribute((packed)) Elf32_Phdr;
 
 typedef struct elf64_phdr {
   int p_type;
@@ -351,7 +345,7 @@ typedef struct elf32_shdr {
   Elf32_Word	sh_info;
   Elf32_Word	sh_addralign;
   Elf32_Word	sh_entsize;
-} Elf32_Shdr;
+} __attribute((packed)) Elf32_Shdr;
 
 typedef struct elf64_shdr {
   unsigned int	sh_name;		/* Section name, index in string tbl */
@@ -406,7 +400,7 @@ typedef struct elf32_note {
   Elf32_Word	n_namesz;	/* Name size */
   Elf32_Word	n_descsz;	/* Content size */
   Elf32_Word	n_type;		/* Content type */
-} Elf32_Nhdr;
+} __attribute((packed)) Elf32_Nhdr;
 
 /* Note header in a PT_NOTE section */
 /*
