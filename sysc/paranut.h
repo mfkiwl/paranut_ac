@@ -105,7 +105,7 @@ protected:
   sc_signal<TWord> lsu_wdata[CPU_CORES];
 
   //    others...
-  sc_signal<bool> cache_enable;
+  sc_signal<bool> icache_enable, dcache_enable;
 
   // Methods...
   void InitSubmodules ();

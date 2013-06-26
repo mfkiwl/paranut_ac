@@ -19,6 +19,17 @@
 
 
 
+// *********** Dynamic Configuration ************
+
+
+int cfgVcdLevel = 2;
+int cfgInsnTrace = 0;
+int cfgDisableCache = 0;
+
+
+
+
+
 // **************** Tracing *********************
 
 
@@ -71,17 +82,17 @@ void TbAssert (bool cond, const char *msg, const char *fileName, const int lineN
 
 
 void TbInfo (const char *msg, const char *fileName, const int lineNo) {
-  fprintf (stderr, "INFO:%10s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
+  fprintf (stderr, "INFO:%15s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
 }
 
 
 void TbWarning (const char *msg, const char *fileName, const int lineNo) {
-  fprintf (stderr, "WARNING:%10s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
+  fprintf (stderr, "WARNING:%12s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
 }
 
 
 void TbError (const char *msg, const char *fileName, const int lineNo) {
-  fprintf (stderr, "ERROR:%10s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
+  fprintf (stderr, "ERROR:%14s, %s:%i: %s\n", sc_time_stamp ().to_string ().c_str (), fileName, lineNo, msg);
   exit (3);
 }
 

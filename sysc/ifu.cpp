@@ -38,8 +38,8 @@ void MIfu::Trace (sc_trace_file *tf, int level) {
   //   internal registers...
   TRACE_BUS (tf, insn_buf, IFU_BUF_SIZE);
   TRACE_BUS (tf, adr_buf, IFU_BUF_SIZE);
-  //TRACE (tf, insn_top);
-  //TRACE (tf, adr_top);
+  TRACE (tf, insn_top);
+  TRACE (tf, adr_top);
 }
 
 
@@ -54,100 +54,6 @@ static bool IsJump (TWord insn) {
 }
 
 
-/*
-void MIfu::StepBuffer () {
-  int n;
-  bool valid;
-
-  // Determine 'valid' output...
-  valid = (buf_top >= 1 && adr_top >= 2);
-  //INFOF (("### bufTop = %i\n", bufTop));
-
-  // Set outputs...
-  ir = insn_buf[0];
-  ir_valid = valid;
-  pc = adr_buf[0];
-  npc = adr_buf[1];
-  ppc = adr_bufM1;
-  //jal_adr = adr_buf[2];
-  npc_valid = (adr_top >= 2); // jal_adr_valid = (adr_top >= 2);
-
-  // Handle Jumps...
-  if (jump == 1) {
-    //INFO ("IFU: Caught Jump");
-    ASSERT (adr_top >= 1);
-    if (buf_top > 1) buf_top = 1;
-    adr_buf[1] = jump_adr;  // this  moved down (TBD: clean up)
-    ASSERT ((jump_adr.read () & 3) == 0);
-    adr_top = 2;
-  }
-
-  // Determine next buffer state...
-  if (valid) {
-  
-    // Consume a queue item...
-    if (next == 1) {
-      ASSERT (buf_top >= 1);
-      adr_bufM1 = adr_buf[0];
-      for (n = 0; n < adr_top-1; n++) {
-        insn_buf[n] = insn_buf[n+1];
-        adr_buf[n] = adr_buf[n+1];
-      }
-      buf_top--;
-      adr_top--;
-    }
-  }
-
-  // Create next loadable adress...
-  if (adr_top < IFU_BUF_SIZE) {
-    adr_buf[adr_top] = adr_buf[adr_top-1] + 4;
-    adr_top++;
-  }
-
-  // Load jump adress if applicable (TBD: clean up)...
-  if (jump == 1) adr_buf[1] = jump_adr;
-}
-
-
-void MIfu::MainThread () {
-  int n;
-
-  // Reset...
-  buf_top = 0;
-  adr_buf[0] = 0x100;
-  adr_top = 1;
-
-  // - to EXU
-  ppc = 0;
-
-  // - to memory
-  rp_rd = 0;
-
-  // Main loop...
-  while (1) {
-    StepBuffer ();
-    wait ();
-
-    // Reload actions...
-    if (adr_top > buf_top                 // new adress available?
-        && buf_top < IFU_BUF_SIZE    // space available?
-        && (buf_top < 2 || !IsJump (insn_buf[buf_top-2]))) {     // jump pending? (-> load delay slot insn, but nothing more)
-      rp_adr = adr_buf[buf_top];
-      //INFOF (("### Loading adr %x, buf_top = %i, adr_top = %i", adrBuf[buf_top], buf_top, adr_top));
-      rp_rd = 1;
-      while (rp_ack == 0) {
-        StepBuffer ();
-        wait ();
-      }
-      rp_rd = 0;
-      insn_buf[buf_top] = rp_data;
-      buf_top++;
-    }
-  }
-}
-*/
-
-
 void MIfu::OutputMethod () {
 
   // Towards EXU...
@@ -156,18 +62,9 @@ void MIfu::OutputMethod () {
   ppc = adr_buf[0];
   pc = adr_buf[1];
   npc = adr_buf[2];
-  npc_valid = (insn_top > 2);
+  npc_valid = (adr_top > 2);
 
   // Towards MemU...
-//  rp_rd = 0;
-//  rp_adr = 0;  // don't care
-//  if (adr_top > insn_top && insn_top < IFU_BUF_SIZE-1           // Space & adress available?
-//      && rp_ack == 0
-//      && !(insn_top > 2 && IsJump(insn_buf[insn_top-2]))) {   // no jump pending?
-//    rp_rd = 1;
-//    rp_adr = adr_buf[insn_top];
-//  }
-
   //rp_rd = (state_reg == s_ifu_reading) ? 1 : 0;
   rp_adr = adr_buf[insn_top];
 }
@@ -217,8 +114,9 @@ void MIfu::TransitionMethod () {
   // Issue new memory read request if appropriate...
   switch (state_reg.read ()) {
     case s_ifu_idle:
-      if (adr_top_var > insn_top && insn_top_var < IFU_BUF_SIZE           // Adress & space available?
-	  && !(insn_top_var > 2 && IsJump(insn_buf[insn_top-2]))) {   // no jump pending?
+      if (adr_top_var > insn_top && insn_top_var < IFU_BUF_SIZE         // Adress & space available?
+          && !(insn_top_var >= 2 && IsJump(insn_buf[insn_top_var-2]))   // no jump pending?
+          && next == 0 && jump == 0 && last_rp_ack == 0) {              // nothing changed to the buffer that may confuse the jump-pending test
 	rp_rd = 1;
         //rp_adr = adr_buf[insn_top_var];
 	state_reg = s_ifu_reading;

@@ -93,7 +93,7 @@ public:
   sc_out<TWord> lsu_wdata;
 
   //   controller outputs...
-  sc_out<bool> cache_enable;
+  sc_out<bool> icache_enable, dcache_enable;
 
   //   TBD: timer, interrupt controller ...
 
@@ -111,7 +111,7 @@ public:
     SC_CTHREAD (MainThread, clk.pos ());
       reset_signal_is (reset, true);
     SC_METHOD (OutputThread);
-      sensitive << regXCE;
+      sensitive << regICE << regDCE;
 
     inCePU = _inCePU;
     modeCap = _modeCap;
@@ -123,7 +123,7 @@ public:
 
   // Processes...
   void MainThread ();
-  void OutputThread () { cache_enable = regXCE; }
+  void OutputThread () { icache_enable = regICE && !cfgDisableCache; dcache_enable = regDCE && !cfgDisableCache; }
 
 protected:
 
@@ -140,7 +140,7 @@ protected:
     regCY, regOV, regF,
     regSUMRA,   // SPR User Mode Read Access
     regDSX,     // Delay Slot Exception (DSX) (1: EPCR points to insn in delay slot)
-    regXCE,     // Instruction Cache Enable (ICE) and Data Cache Enable (DCE)
+    regICE, regDCE,     // Instruction Cache Enable (ICE) and Data Cache Enable (DCE)
     regIEE;     // Interrupt Exception Enable (IEE)
 
   // CPU registers (no SystemC registers yet)...

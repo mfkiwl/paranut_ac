@@ -56,25 +56,67 @@ void run_cycles (int n = 1) {
 int sc_main (int argc, char *argv []) {
   CMemory memory;
   CUart uart;
+  char *elfFileName;
+  int arg, dumpFrom, dumpTo;
+
+  // Parse command line...
+  dumpFrom = dumpTo = 0;
+  elfFileName = NULL;
+  arg = 1;
+  while (arg < argc && argv[arg][0] == '-') {
+    switch (argv[arg][1]) {
+    case 't':
+      cfgVcdLevel = MAX (0, MIN (9, argv[arg][2] - '0'));
+      fprintf (stderr, "(cfg) vcdLevel = %i\n", cfgVcdLevel);
+      break;
+    case 'i':
+      cfgInsnTrace = 1;
+      break;
+    case 'c':
+      cfgDisableCache = 1;
+      break;
+    case 'm':
+      dumpFrom = (int) strtol (argv[++arg], NULL, 0);
+      dumpTo = (int) strtol (argv[++arg], NULL, 0);
+      fprintf (stderr, "(cfg) dumping memory from 0x%x to 0x%x (%s to %s)\n", dumpFrom, dumpTo, argv[arg-1], argv[arg]);
+      break;
+    default:
+      printf ("ERROR: Unknown option '%s'.\n", argv[arg]);
+      arg = argc;
+    }
+    arg++;
+  }
+  if (arg < argc) elfFileName = argv[arg];
+  if (!elfFileName) {
+    puts ("Usage: paranut_tb [<options>] <OR32 ELF file>\n"
+          "\n"
+          "Options:\n"
+          "  -t<n>: set VCD trace level (0 = no trace file; default = 2)\n"
+          "  -i: generate instruction trace\n"
+          "  -c: disable caching\n"
+          "  -m <from> <to>: dump memory region before/after running the program"
+         );
+    return 3;
+  }
 
   // Read ELF file...
-  fprintf (stderr, "\n");
-  if (argc != 2) {
-    puts ("Usage: paranut_tb <OR32 ELF file>");
-    return 3;
-  }
-  if (!memory.ReadFile (argv[1])) {
-    printf ("ERROR: Unable to read ELF file '%s'.\n", argv[1]);
+  fprintf (stderr, "(sim) Reading ELF file '%s'...\n", elfFileName);
+  if (!memory.ReadFile (elfFileName)) {
+    printf ("ERROR: Unable to read ELF file '%s'.\n", elfFileName);
     return 3;
   }
   fprintf (stderr, "\n");
-  // memory.Dump ();
-  // memory.Dump (0x700, 0xfff);
 
+  if (dumpFrom < dumpTo) {
+    printf ("(sim) Begin memory dump from 0x%x to 0x%x\n", dumpFrom, dumpTo);
+    memory.Dump (dumpFrom, dumpTo);
+    printf ("(sim) End memory dump\n\n");
+  }
 
   //trace_verbose = true;
 
   // SystemC elaboration...
+  fprintf (stderr, "(sim) Starting SystemC elaboration...\n");
   sc_set_time_resolution (1.0, SC_NS);
 
   MPeripherals peri ("peripherals", &memory, &uart);
@@ -107,7 +149,7 @@ int sc_main (int argc, char *argv []) {
 
   // Trace file...
   sc_trace_file *tf;
-  if (1) {
+  if (cfgVcdLevel > 0) {
     tf = sc_create_vcd_trace_file ("paranut_tb");
     tf->delta_cycles (false);
 
@@ -124,7 +166,7 @@ int sc_main (int argc, char *argv []) {
     TRACE(tf, wb_dat_w);
     TRACE(tf, wb_dat_r);
 
-    nut.Trace (tf, 2);
+    nut.Trace (tf, cfgVcdLevel);
   }
   else {
     fprintf (stderr, "Tracing is disabled.\n");
@@ -134,6 +176,7 @@ int sc_main (int argc, char *argv []) {
   //nut.Trace (NULL, 3);   // Display signal names
 
   // Run simulation...
+  fprintf (stderr, "(sim) Starting SystemC simulation...\n\n");
   sc_start (SC_ZERO_TIME);
 
   INFO ("Reset...");
@@ -148,7 +191,11 @@ int sc_main (int argc, char *argv []) {
 
   if (tf) sc_close_vcd_trace_file (tf);
 
-  memory.Dump (0x700, 0xfff);   // for "test_all.S"
+  if (dumpFrom < dumpTo) {
+    printf ("\n(sim) Begin memory dump from 0x%x to 0x%x\n", dumpFrom, dumpTo);
+    memory.Dump (dumpFrom, dumpTo);
+    printf ("(sim) End memory dump\n\n");
+  }
 
   return 0;
 }

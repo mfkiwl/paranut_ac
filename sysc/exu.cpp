@@ -17,6 +17,7 @@
 
 
 
+
 // **************** Tracing *********************
 
 
@@ -61,7 +62,8 @@ void MExu::Trace (sc_trace_file *tf, int level) {
   TRACE (tf, regF);
   TRACE (tf, regSUMRA);
   TRACE (tf, regDSX);
-  TRACE (tf, regXCE);
+  TRACE (tf, regICE);
+  TRACE (tf, regDCE);
   TRACE (tf, regIEE);
 }
 
@@ -111,6 +113,8 @@ TWord MExu::GetSpr (TWord _regNo) {
   ESpr regNo = (ESpr) _regNo;
   sc_uint<32> flags;
 
+  //INFOF (("GetSpr: Reading from SPR 0x%x", _regNo));
+
   if (regNo >= sprEPCR0 && regNo <= sprEPCR0+15) {        // EPCR0-EPCR15 - Exception PC registers
     return regEPCR;
   }
@@ -147,19 +151,23 @@ TWord MExu::GetSpr (TWord _regNo) {
     case sprFPCSR:         // FPCSR     - FP Control/Status register
       return 0;
     case sprSR:            // SR        - Supervision register
-      flags = ("0000",     // Context ID (CID)
-               "00000000000",  // reserved
+      flags = (sc_uint<4> (0),     // Context ID (CID)
+               sc_uint<11> (0),  // reserved
                regSUMRA,   // SPR User Mode Read Access
-               "10",       // Fixed One (FO), Exception Prefix High (EPH)
+               1,          // Fixed One (FO)
+               0,          // Exception Prefix High (EPH)
                regDSX,     // Delay Slot Exception (DSX) (1: EPCR points to insn in delay slot)
-               "0",        // Overflow flag exception (OVE) (1: overflow causes exception)
+               0,          // Overflow flag exception (OVE) (1: overflow causes exception)
                regOV, regCY, regF,    // flags: OV, CY and F
-               "00",       // CID enable (CE), little endian enable (LEE))
-               "00",       // Insn MMU Enable (IME), Data MMU Enable (DME); map to one flag?
-               regXCE, regXCE, // Instruction Cache Enable (ICE), Data Cache Enable (DCE)
+               0,          // CID enable (CE),
+               0,          // little endian enable (LEE))
+               0,          // Insn MMU Enable (IME),
+               0,          // Data MMU Enable (DME); map to IME?
+               regICE, regDCE, // Instruction Cache Enable (ICE), Data Cache Enable (DCE)
                regIEE,     // Interrupt Exception Enable (IEE)
-               "0",        // Tick Timer Exception Enable (TEE)
-               "1");       // Supervisor Mode (SM)
+               0,          // Tick Timer Exception Enable (TEE)
+               1);         // Supervisor Mode (SM)
+      //INFOF (("GetSpr: Reading SR: 0x%0x, regICE = %i, regDCE = %i", flags.value (), (int) regICE, (int) regDCE));
       return flags.value();
     default:
       ERRORF(("SetSpr: Read access to unknown SPR 0x%04x", _regNo));
@@ -171,6 +179,8 @@ TWord MExu::GetSpr (TWord _regNo) {
 void MExu::SetSpr (TWord _regNo, TWord _val) {
   ESpr regNo = (ESpr) _regNo;
   sc_uint<32> val = _val;
+
+  //INFOF (("SetSpr: Writing 0x%x to SPR 0x%x", _val, _regNo));
 
   if (regNo >= sprEPCR0 && regNo <= sprEPCR0+15) {        // EPCR0-EPCR15 - Exception PC registers
     WARNING(("SetSpr: SPR write to EPCRn - against specification"));
@@ -187,12 +197,14 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
   }
   else switch (regNo) {
     case sprSR:            // SR        - Supervision register
+      //INFOF (("SetSpr: Setting SR to 0x%0x, regICE = %i, regDCE = %i", (int) val, (int) val[4], (int) val[3]));
       regSUMRA = val[16];
       // regDSX = val[13];   // handled as read-only (spec. not clear whether r/w is required)
       regOV = val[11];
       regCY = val[10];
       regF = val[9];
-      regXCE = val[3] and val[4];  // both DCE and ICE have to be set
+      regICE = val[4];
+      regDCE = val[3];
       regIEE = val[2];
       break;
     default:
@@ -428,7 +440,8 @@ void MExu::MainThread () {
   exceptId = 0;
 
   //   initialize internal registers...
-  regXCE = 0;  // enable cache
+  regICE = 0;  // disable instruction caching
+  regDCE = 0;  // disable data caching
   regIEE = 0;  // disable interrupts
 
   // Main loop...
@@ -457,7 +470,7 @@ void MExu::MainThread () {
       inDelaySlot = nextInDelaySlot;
       nextInDelaySlot = 0;
 
-      if (0) {   // DEBUG
+      if (cfgInsnTrace) {
         DumpRegisterInfo ();
         INFOF (("   (%s)", strrchr (name (), '.') + 1));
         //mainMemory->Dump (0x12d88, 0x12d90);
@@ -531,12 +544,12 @@ void MExu::MainThread () {
         lsu_rd = 1;
         //   wait for ACK...
         while (lsu_ack == 0) wait (1);
-        //   read & write back result...
-        regFile [insn.range(25, 21)] = lsu_rdata;
         lsu_rd = 0;
         //INFOF (("Load (%08x) = %08x    SP/R1 = %08x", adr, lsu_rdata.read (), regFile[1].read ()));
         ifu_next = 1;
         wait (1);
+        //   read & write back result (were delayed)...
+        regFile [insn.range(25, 21)] = lsu_rdata;
       }
       else if (opcode >= 0x35 && opcode <= 0x37) {
         // (LS) Store...
@@ -602,9 +615,13 @@ void MExu::MainThread () {
           if (opcode == 0x01 || opcode == 0x12) {    // write to link register?
             // first get link adress, then perform the jump...
             ifu_next = 1;
+            //INFOF (("### jal[r]: before step: pc = 0x%x, npc = 0x%x", ifu_pc.read (), ifu_npc.read ()));
             wait (1);
             ifu_next = 0;
+            wait (1);    // FIXME: This wait is only necessary due to SystemC scheduling of the 'npc_*pc' signals
+            //INFOF (("### jal[r]: before wait: pc = 0x%x, npc = 0x%x", ifu_pc.read (), ifu_npc.read ()));
             while (ifu_npc_valid == 0) wait (1);
+            //INFOF (("### jal[r]: after  wait: pc = 0x%x, npc = 0x%x", ifu_pc.read (), ifu_npc.read ()));
             regFile[LINK_REGISTER] = ifu_npc;
             ifu_jump = 1;
             wait (1);

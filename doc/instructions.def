@@ -672,7 +672,7 @@ OPE "rD <- SR(rA or K)"
 EXC "None"
 END
 
-INS l.mfspr "Move from Special Purpose Register"
+INS l.mfspr "Move to Special Purpose Register"
 COD 110000 kkkkk aaaaa bbbbb k kk kkkk kkkk         
 FMT "l.mtspr rA, rB, K"      # move to special purpose register
 DES "The contents of the general-purpose register rB are moved into the special register defined by contents of register rA logically ORed with the immediate value."

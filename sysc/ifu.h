@@ -78,7 +78,6 @@ protected:
 
   sc_signal<TWord> insn_buf[IFU_BUF_SIZE];
   sc_signal<TWord> adr_buf[IFU_BUF_SIZE];
-  // TWord buf_top, adr_top, adr_bufM1; // TBD: remove
   sc_signal<int> insn_top, adr_top;   // 'insn_top': first buffer place with not-yet-known contents (insn)
                                       // 'adr_top': first buffer place with not-yet-known adress
   sc_signal<bool> last_rp_ack;

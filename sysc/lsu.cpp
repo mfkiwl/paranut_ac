@@ -128,41 +128,19 @@ void MLsu::OutputMethod () {
   sig_wbdata = wbdata;
   sig_wbbsel = bsel;
 
-  // Handle read request, generate 'rdata', 'rp_rd', 'rp_bsel'...
+  // NOTE: The 'rdata' signal must not depend on 'rd', since 'rdata' must still be readable one cycle after de-asserting 'rd'
+
+  // Read request: generate 'rdata', 'rp_bsel'...
   rdata_var = rp_data;  // default
   rp_bsel = bsel;
-  if (rd == 1) {
-    // INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
-    if (wbuf_hit < 0) {
-      // pass through data/ack from the MEMU...
-      rp_rd = 1;
-      ack = rp_ack;
-    }
-    else {   // wbuf hit...
-      // INFOF (("LSU:   bsel = %x, W := wbuf_valid[wbuf_hit].read () = %x, ~W = %x, bsel & ~W = %x",
-      //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
-      if ((bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
-        // we can serve all bytes from the write buffer
-        // INFO ("LSU: Serving all bytes from the write buffer");
-        rdata_var = wbuf_data[wbuf_hit];
-        rp_rd = 0;  // no request to memory
-        ack = 1;
-      }
-      else {
-        // we can only serve partially, but MUST forward modified bytes from the write buffer
-        INFO ("LSU: Serving parially from the write buffer");
-        for (n = 0; n < 4; n++) if (wbuf_valid[wbuf_hit].read () [n]) {
-          rdata_var = (rdata_var & ~(0xff000000 >> (8*n))) | (wbuf_data[wbuf_hit] & (0xff000000 >> (8*n)));
-          INFOF (("LSU:   byte #%i, rdata_var = 0x%08x", n, rdata_var));
-        }
-        rp_rd = 1;
-        ack = rp_ack;
-      }
+  if (wbuf_hit >= 0) {
+    //INFO ("LSU: Serving (partially) from the write buffer");
+    for (n = 0; n < 4; n++) if (wbuf_valid[wbuf_hit].read () [n]) {
+      rdata_var = (rdata_var & ~(0xff000000 >> (8*n))) | (wbuf_data[wbuf_hit] & (0xff000000 >> (8*n)));
+      //INFOF (("LSU:   byte #%i, rdata_var = 0x%08x", n, rdata_var));
     }
   }
-
-  // Format data word & generate 'rdata'...
-  switch (width.read ()) {
+  switch (width.read ()) {   // Format data word & generate 'rdata'...
     case 1:
       rdata_var = (rdata_var >> (8 * (~adr & 3))) & 0xff;
       if (exts == 1) rdata_var = (rdata_var ^ 0x80) - 0x80;
@@ -173,6 +151,26 @@ void MLsu::OutputMethod () {
       break;
   }
   rdata = rdata_var;
+
+  // Read request: generate 'rp_rd', 'ack'...
+  if (rd == 1) {
+    // INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
+    if (wbuf_hit >= 0 && (bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
+      // we can serve all bytes from the write buffer
+      // INFO ("LSU: Serving all bytes from the write buffer");
+      rdata_var = wbuf_data[wbuf_hit];
+      rp_rd = 0;   // no request to memory
+      ack = 1;
+    }
+    else {
+      // we either have a write buffer miss or cannot serve all bytes
+      // => pass through ack from the MEMU...
+      rp_rd = 1;   // pass request to memory
+      ack = rp_ack;
+    }
+  }
+  // INFOF (("LSU:   bsel = %x, W := wbuf_valid[wbuf_hit].read () = %x, ~W = %x, bsel & ~W = %x",
+  //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
 
   // Handle write request...
   if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed ())) {
@@ -226,7 +224,7 @@ void MLsu::TransitionThread () {
 
     // Handle cache control operations...
     if (cache_writeback == 1 || cache_invalidate == 1) {
-      ASSERT (wr == 0);
+      ASSERT (wr == 0 && rd == 0);
       wbuf_entry = IsFlushed () ? 0 : -1;
       // Cache control is only allowed if the write buffer is flushed.
       // If asserted, the adress and (not necessary) data are copied to the buffer
@@ -243,7 +241,7 @@ void MLsu::TransitionThread () {
     }
 
     // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
-    if (wp_ack == 1) {
+    if (wp_ack == 1 && rd == 0) {                 // no changes (removes) in the buffer must happen during reads
       for (n = 0; n < MAX_WBUF_SIZE-1; n++) {
         wbuf_adr[n] = wbuf_adr[n+1];
         wbuf_data[n] = wbuf_data[n+1];

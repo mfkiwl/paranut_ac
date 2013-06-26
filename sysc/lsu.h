@@ -42,7 +42,7 @@ public:
   sc_in<sc_uint<2> > width;  // "00" = word, "01" = byte, "10" = half word
   sc_in<bool> exts;
   sc_in<TWord> adr;
-  sc_out<TWord> rdata;
+  sc_out<TWord> rdata;    // Note: 'rdata' is delayed by one clock relative to 'ack' (see comment to the read port interface in 'memu.h')
   sc_in<TWord> wdata;
 
   //   to MEMU/read port...

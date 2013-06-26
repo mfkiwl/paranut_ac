@@ -126,7 +126,6 @@ public:
 
 protected:
   STagEntry ram[CACHE_SETS];
-  //SCacheTag ram[CACHE_SETS];
 
   // Registers...
   //   for LRU replacement...

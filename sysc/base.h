@@ -17,9 +17,18 @@
 
 
 
-// Configuration...
+// Static Configuration...
 
 #define PN_BIG_ENDIAN 1
+
+
+
+// Dynamic Configuration...
+
+extern int cfgVcdLevel;       // VCD trace level (0 = no VCD file)
+extern int cfgInsnTrace;      // if set, simulation info is printed with each instruction
+extern int cfgDisableCache;   // if set, caching is disabled by the EXUs, independent of the ICE/DCE flag
+
 
 
 

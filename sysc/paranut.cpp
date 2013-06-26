@@ -79,7 +79,8 @@ void MParanut::Trace (sc_trace_file *tf, int levels) {
   TRACE_BUS (tf, lsu_rdata, CPU_CORES);
   TRACE_BUS (tf, lsu_wdata, CPU_CORES);
   //   other signals...
-  TRACE (tf, cache_enable);
+  TRACE (tf, icache_enable);
+  TRACE (tf, dcache_enable);
 
   // Sub-Modules...
   if (levels > 1) {
@@ -249,7 +250,8 @@ void MParanut::InitSubmodules () {
     exu[n]->lsu_wdata (lsu_wdata[n]);
   }
   //   Special CePU signals...
-  exu[0]->cache_enable(cache_enable);
+  exu[0]->icache_enable(icache_enable);
+  exu[0]->dcache_enable(dcache_enable);
 }
 
 
@@ -292,8 +294,15 @@ void MParanut::InterconnectMethod () {
     rp_bsel[CPU_CORES+n] = 0xf;
 
   // 'direct' lines for read/write ports...
-  for (n = 0; n < 2 * CPU_CORES; n++)
-    rp_direct[n] = (cache_enable == 0 || !AdrIsCached (rp_adr[n]));
-  for (n = 0; n < CPU_CORES; n++)
-    wp_direct[n] = (cache_enable == 0 || !AdrIsCached (wp_adr[n]));
+  for (n = 0; n < CPU_CORES; n++) {
+    if (cfgDisableCache) {
+      rp_direct[n] = 1;
+      wp_direct[n] = 1;
+      rp_direct[CPU_CORES+n] = 1;
+    } else {
+      rp_direct[n] = (dcache_enable == 0 || !AdrIsCached (rp_adr[n]));
+      wp_direct[n] = (dcache_enable == 0 || !AdrIsCached (wp_adr[n]));
+      rp_direct[CPU_CORES+n] = (icache_enable == 0 || !AdrIsCached (rp_adr[n]));
+    }
+  }
 }

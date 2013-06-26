@@ -24,12 +24,20 @@ memu_tb: $(MEMU_TB_OBJ)
 
 sim: paranut_tb test_app
 	@echo; echo "### Simulating..."; echo
-	./paranut_tb $(TEST_APP_DIR)/$(TEST_APP)
+	./paranut_tb -m 0x700 0x7ff $(TEST_APP_DIR)/$(TEST_APP)
 
 test_app:
 	@echo; echo "### Making test application"; echo
 	+make -C $(TEST_APP_DIR) $(TEST_APP)       
 
+sim_newlib: paranut_tb hello_newlib
+	@echo; echo "### Simulating..."; echo
+	./paranut_tb ../sw/hello_newlib/hello_newlib
+
+hello_newlib:
+	@echo; echo "### Making 'hello_newlib"; echo
+	+make -C ../sw/hello_newlib hello_newlib
+	
 depend:
 	makedepend -Y $(PARANUT_TB_SRC) $(MEMU_TB_SRC) # -- $(CFLAGS) -- $(PN_SRC) $(MEMU_TB_SRC)
 
