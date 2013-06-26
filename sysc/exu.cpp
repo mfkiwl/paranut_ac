@@ -481,6 +481,7 @@ void MExu::MainThread () {
       // Perform instruction...
       if (opcode == 0x38) {
         // (ALU) ALU without immediate...
+        perfMon.Count (evALU);
         aluFunc = (EAluFunc) insn.range (3, 0).value ();
         delay = RunAlu (insn, aluFunc, aaReg, abReg, 1, 1, 0);
         if (delay > 1) wait (delay - 1);
@@ -489,6 +490,7 @@ void MExu::MainThread () {
       }
       else if (opcode == 0x39) {
         // (ALU) Set-flag without immediate...
+        perfMon.Count (evALU);
         delay = RunAlu (insn, afSub, aaReg, abReg, 0, 0, 1);
         if (delay > 1) wait (delay - 1);
         ifu_next = 1;
@@ -496,6 +498,7 @@ void MExu::MainThread () {
       }
       else if (opcode >= 0x27 && opcode <= 0x2c) {
         // (ALU) ALU with immediate...
+        perfMon.Count (evALU);
         static const EAluFunc aluFuncTable [] = { afAdd, afAdc, afAnd, afOr, afXor, afMul };
         static const bool signExtTable []     = {     1,     1,     0,    0,     1,     1 };
         aluFunc = aluFuncTable [opcode - 0x27];
@@ -507,6 +510,7 @@ void MExu::MainThread () {
       }
       else if (opcode == 0x2e) {
         // (ALU) Shift & rotate with immediate...
+        perfMon.Count (evALU);
         delay = RunAlu (insn, afSxx, aaReg, abImm16s, 1, 1, 0);
         if (delay > 1) wait (delay - 1);
         ifu_next = 1;
@@ -515,6 +519,7 @@ void MExu::MainThread () {
 
       else if (opcode == 0x2f) {
         // (ALU) Set-flag with immediate...
+        perfMon.Count (evALU);
         delay = RunAlu (insn, afSub, aaReg, abImm16s, 0, 0, 1);
         if (delay > 1) wait (delay - 1);
         ifu_next = 1;
@@ -523,6 +528,7 @@ void MExu::MainThread () {
 
       else if (opcode == 0x06) {
         // (ALU) MOVHI...
+        perfMon.Count (evALU);
         delay = RunAlu (insn, afMovhi, aaReg, abImm16hi, 1, 0, 0);
         if (delay > 1) wait (delay - 1);
         ifu_next = 1;
@@ -534,6 +540,8 @@ void MExu::MainThread () {
         sc_uint<2> width = ((opcode - 1) & 6) >> 1;   // will need awful table for implementation
         bool signExt = !(opcode & 1);
         TWord data, adr;
+
+        perfMon.Count (evLoad);
 
         //   calculate adress & set LSU signals...
         delay = RunAlu (insn, afAdd, aaReg, abImm16s, 0, 0, 0, &adr);
@@ -556,6 +564,8 @@ void MExu::MainThread () {
         sc_uint<2> width = (opcode -1) & 3;
         TWord adr;
 
+        perfMon.Count (evStore);
+
         //   calculate adress & set LSU signals...
         delay = RunAlu (insn, afAdd, aaReg, abImm162s, 0, 0, 0, &adr);
         if (delay > 1) wait (delay - 1);
@@ -574,6 +584,7 @@ void MExu::MainThread () {
       else if (opcode == 0x3e) {
         // (LS, ParaNut extension) Cache control...
         TWord adr;
+        perfMon.Count (evOther);
         //   calculate adress...
         delay = RunAlu (insn, afAdd, aaReg, abImm162s, 0, 0, 0, &adr);
         if (delay > 1) wait (delay - 1);
@@ -601,6 +612,7 @@ void MExu::MainThread () {
         // (JMP) j, jal, bnf, bf, jr, jalr ...
         TWord adr;
 
+        perfMon.Count (evJump);
         if (opcode <= 0x01 || opcode >= 0x11 || (regF == insn[28])) {    // Jump or Branch taken?
           if (opcode >= 0x11)
             adr = regFile [insn.range(15, 11)];
@@ -641,6 +653,7 @@ void MExu::MainThread () {
 
       else if (opcode == 0x05) {
         // (other) NOP...
+        perfMon.Count (evOther);
         switch (insn.range (15, 0)) {
           case 0x0001:    // HALT
             // INFO ("HALT instruction received.");
@@ -648,7 +661,8 @@ void MExu::MainThread () {
             while (true) wait ();
             break;
           case 0x0004:    // outbyte
-            INFOF(("TERM: '%c'", regFile[3].read ()));
+            putchar (regFile[3].read ());
+            //INFOF(("TERM: '%c'", regFile[3].read ()));
             break;
         }
         ifu_next = 1;
@@ -657,12 +671,14 @@ void MExu::MainThread () {
 
       else if (opcode == 0x08 && insn.range (25, 21) == 0) {
         // (other) SYS / (TRAP to be inserted here)...
+        perfMon.Count (evOther);
         exceptId = 0xc;
         exceptRestart = false;
         //WARNING (("System calls not implemented yet - ignoring l.sys/l.trap."));    // Exceptions not implemented yet
       }
       else if (opcode == 0x09) {
         // (other) RFE ...
+        perfMon.Count (evOther);
         SetSpr (sprSR, regESR);
         ifu_jump_adr = regEPCR;
         ifu_jump = 1;
@@ -677,6 +693,7 @@ void MExu::MainThread () {
       else if (opcode == 0x2d) {
         // (other) MFSPR...
         TWord regNo;
+        perfMon.Count (evOther);
         delay = RunAlu (insn, afOr, aaReg, abImm16z, 0, 0, 0, &regNo);
         if (delay > 1) wait (delay - 1);
         regFile [insn.range(25, 21)] = GetSpr (regNo & 0xffff);
@@ -686,6 +703,7 @@ void MExu::MainThread () {
       else if (opcode == 0x30) {
         // (other) MTSPR...
         TWord regNo;
+        perfMon.Count (evOther);
         delay = RunAlu (insn, afOr, aaReg, abImm162s, 0, 0, 0, &regNo);
         if (delay > 1) wait (delay - 1);
         SetSpr (regNo & 0xffff, regFile [insn.range(15, 11)]);

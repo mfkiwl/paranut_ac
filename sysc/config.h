@@ -39,7 +39,7 @@ static inline bool AdrIsSpecial (TWord adr) { return (adr & 0xf0000000) == 0x900
 #define CACHE_SETS_LD 9     // number of cache sets
 #define CACHE_SETS (1 << CACHE_SETS_LD)    // 512
 
-#define CACHE_WAYS_LD 2     // associativity; supported values are 0..2, corresponding to 1/2/4-way set-associativity
+#define CACHE_WAYS_LD 0     // associativity; supported values are 0..2, corresponding to 1/2/4-way set-associativity
 #define CACHE_WAYS (1 << CACHE_WAYS_LD)
 #define CACHE_REPLACE_LRU 1   // 0 = random replacement, 1 = LRU replacement
 

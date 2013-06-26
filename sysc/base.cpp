@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <float.h>
 
 #include <systemc.h>
 
@@ -235,3 +236,114 @@ char *DisAss (TWord insn) {
 
 
 
+
+
+// **************** Performance measuring *****************
+
+
+void CPerfMon::Init (int _events, CEventDef *_evTab) {
+  int n;
+
+  events = _events;
+  evTab = _evTab;
+  countTab = new int [_events];
+  timeTab = new double [_events];
+  minTab = new double [_events];
+  maxTab = new double [_events];
+  Reset ();
+}
+
+
+void CPerfMon::Done () {
+  if (events > 0) {
+    delete [] countTab;
+    delete [] timeTab;
+    delete [] minTab;
+    delete [] maxTab;
+  }
+}
+
+
+void CPerfMon::Reset () {
+  int n;
+
+  lastEvNo = -1;
+  for (n = 0; n < events; n++) {
+    countTab [n] = 0;
+    timeTab [n] = maxTab[n] = 0.0;
+    minTab[n] = DBL_MAX;
+  }
+}
+
+
+void CPerfMon::Count (int evNo) {
+  double curStamp, t;
+
+  curStamp = sc_time_stamp ().to_double ();
+  if (lastEvNo >= 0) {
+    if (evTab [lastEvNo].isTimed) {
+      t = curStamp - lastStamp;
+      timeTab [lastEvNo] += t;
+      if (t < minTab[lastEvNo]) minTab[lastEvNo] = t;
+      if (t > maxTab[lastEvNo]) maxTab[lastEvNo] = t;
+    }
+  }
+  countTab [evNo]++;
+  if (evTab [evNo].isTimed) lastStamp = curStamp;
+  lastEvNo = evNo;
+}
+
+
+static void DisplayLine (const char *name, int count, int avgCount, double total, double min, double max, bool isTimed) {
+  if (avgCount > 0 && isTimed)
+    printf ("(perf)   %-10s %7i   %8.1lf %8.1lf %8.1lf %11.1lf\n", name, count, min, total / avgCount, max, total);
+  else
+    printf ("(perf)   %-10s %7i\n", name, count);
+}
+
+
+void CPerfMon::Display (char *name) {
+  double timeTotal, minTotal, maxTotal;
+  int countTotal, avgCountTotal, n;
+
+  printf ("(perf)\n"
+          "(perf) ********** Performance statics ");
+  if (name) printf ("of unit '%s'", name);
+  printf ("\n"
+          "(perf)\n"
+          "(perf)                          Time [ns]\n"
+          "(perf)   Event        Count        min      avg      max       Total\n"
+          "(perf)   -----------------------------------------------------------\n");
+  countTotal = avgCountTotal = 0;
+  timeTotal = maxTotal = 0.0;
+  minTotal = DBL_MAX;
+  for (n = 0; n < events; n++) {
+    DisplayLine (evTab[n].name, countTab [n], countTab [n], timeTab[n], minTab[n], maxTab[n], evTab[n].isTimed);
+    countTotal += countTab[n];
+    if (evTab[n].isTimed) avgCountTotal += countTab[n];
+    timeTotal += timeTab[n];
+    if (minTab[n] < minTotal) minTotal = minTab[n];
+    if (maxTab[n] > maxTotal) maxTotal = maxTab[n];
+  }
+  printf ("(perf)   -----------------------------------------------------------\n");
+  DisplayLine ("Total", countTotal, avgCountTotal, timeTotal, minTotal, maxTotal, true);
+  printf ("(perf)\n");
+}
+
+
+
+
+
+// ***** CPerfMonCPU *****
+
+
+void CPerfMonCPU::Init () {
+  static CEventDef eventDef [] = {
+    { "ALU", true },
+    { "Load", true },
+    { "Store", true },
+    { "Jump", true },
+    { "Other", true }
+  };
+  CPerfMon::Init (5, eventDef);
+}

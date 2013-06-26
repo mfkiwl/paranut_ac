@@ -127,4 +127,65 @@ char *TbStringF (const char *format, ...) {
 char *DisAss (TWord insn);  // disassemble OR32 instruction; return string valid until next call to this function
 
 
+
+
+
+// **************** Performance measuring *****************
+
+
+class CEventDef {
+public:
+  const char *name;
+  bool isTimed;
+};
+
+
+class CPerfMon {
+public:
+  CPerfMon () { Init (0, NULL); }
+  CPerfMon (int _events, CEventDef *_evTab) { Init (_events, _evTab); }
+  ~CPerfMon () { Done (); }
+
+  void Init (int _events, CEventDef *_evTab);
+  void Done ();
+
+  void Reset ();
+  void Count (int evNo);
+
+  void Display (char *name = NULL);
+
+protected:
+  int events;
+  CEventDef *evTab;
+  int *countTab;
+  double *timeTab, *minTab, *maxTab;
+
+  double lastStamp;
+  int lastEvNo;
+};
+
+
+
+// ***** CPerfMonCPU *****
+
+
+typedef enum {
+  evALU = 0,
+  evLoad,
+  evStore,
+  evJump,
+  evOther
+} EEventsCPU;
+
+
+class CPerfMonCPU: public CPerfMon {
+public:
+  CPerfMonCPU () { Init (); }
+  void Init ();
+
+  void Count (EEventsCPU _evNo) { CPerfMon::Count ((int) _evNo); }
+};
+
+
+
 #endif

@@ -57,6 +57,8 @@ SC_MODULE(MParanut) {
 
   // Functions...
   void Trace (sc_trace_file *tf, int levels = 1);
+  void DisplayStatistics () { exu[0]->DisplayStatistics (); }
+
   bool IsHalted () { return exu[0]->IsHalted (); }
 
   // Processes...

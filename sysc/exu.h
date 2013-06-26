@@ -119,6 +119,8 @@ public:
 
   // Functions...
   void Trace (sc_trace_file *tf, int levels = 1);
+  void DisplayStatistics () { return perfMon.Display (); }
+
   bool IsHalted () { return mode == 0; }
 
   // Processes...
@@ -153,6 +155,9 @@ protected:
   TWord GetSpr (TWord regNo);
 
   void DumpRegisterInfo ();
+
+  // Performance Monitor...
+  CPerfMonCPU perfMon;
 };
 
 

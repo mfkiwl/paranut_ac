@@ -190,6 +190,7 @@ int sc_main (int argc, char *argv []) {
   INFO ("Simulation finished.");
 
   if (tf) sc_close_vcd_trace_file (tf);
+  nut.DisplayStatistics ();
 
   if (dumpFrom < dumpTo) {
     printf ("\n(sim) Begin memory dump from 0x%x to 0x%x\n", dumpFrom, dumpTo);
