@@ -114,8 +114,8 @@ public:
   SC_CTOR(MTagRam) {
     //SC_CTHREAD(MainThread, clk.pos());
     //  reset_signal_is (reset, true);
-    SC_THREAD(MainThread);
-      sensitive << clk.pos ();
+  SC_THREAD(MainThread);
+    sensitive << clk.pos ();
   }
 
   // Functions...

@@ -341,7 +341,8 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
           outRegD = ( inA.range (31-n, 0), inA.range (31, n) );
           break;
       }
-      retDelay = n;   // assume sequential shift
+      else outRegD = inA;
+      retDelay = MAX(n, 1);   // assume sequential shift
       break;
 
     // Byte & half word extensions...

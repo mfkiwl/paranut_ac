@@ -28,15 +28,20 @@ sim: paranut_tb test_app
 
 test_app:
 	@echo; echo "### Making test application"; echo
-	+make -C $(TEST_APP_DIR) $(TEST_APP)       
-
-sim_newlib: paranut_tb hello_newlib
-	@echo; echo "### Simulating..."; echo
-	./paranut_tb ../sw/hello_newlib/hello_newlib
+	+make -C $(TEST_APP_DIR) $(TEST_APP)
 
 hello_newlib:
 	@echo; echo "### Making 'hello_newlib"; echo
 	+make -C ../sw/hello_newlib hello_newlib
+	@echo; echo "### Simulating..."; echo
+	./paranut_tb ../sw/hello_newlib/hello_newlib
+
+dhrystone: paranut_tb
+	@echo; echo "### Making 'dhrystone'"; echo
+	+make -C ../sw/dhrystone dhry
+	@echo; echo "### Simulating..."; echo
+	./paranut_tb -t0 ../sw/dhrystone/dhry
+
 	
 depend:
 	makedepend -Y $(PARANUT_TB_SRC) $(MEMU_TB_SRC) # -- $(CFLAGS) -- $(PN_SRC) $(MEMU_TB_SRC)

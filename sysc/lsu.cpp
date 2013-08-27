@@ -241,7 +241,11 @@ void MLsu::TransitionThread () {
     }
 
     // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
-    if (wp_ack == 1 && rd == 0) {                 // no changes (removes) in the buffer must happen during reads
+    if (wp_ack == 1 && rd == 0) {    // entry MUST be removed and invalidated once successfully written
+      // TBD: no changes (removes) in the buffer must happen during reads, but presently, multiple writes occur
+      // Solutions:
+      //   a) Introduce 'dirty' bit for each wbuf entry; on write reset dirty bit, on rd=0 remove buffer entry
+      //   b) Introduce register for read forwarding for the case the reader does not pick its data immediately
       for (n = 0; n < MAX_WBUF_SIZE-1; n++) {
         wbuf_adr[n] = wbuf_adr[n+1];
         wbuf_data[n] = wbuf_data[n+1];
