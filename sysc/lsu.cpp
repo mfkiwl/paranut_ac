@@ -57,10 +57,12 @@ void MLsu::Trace (sc_trace_file *tf, int level) {
   TRACE_BUS (tf, wbuf_adr, MAX_WBUF_SIZE);
   TRACE_BUS (tf, wbuf_data, MAX_WBUF_SIZE);
   TRACE_BUS (tf, wbuf_valid, MAX_WBUF_SIZE);
+  TRACE (tf, wbuf_dirty0);
 
   // Internal signals...
   TRACE (tf, sig_wbdata);
   TRACE (tf, sig_wbbsel);
+  TRACE (tf, sig_wbuf_dont_remove);
 }
 
 
@@ -153,12 +155,14 @@ void MLsu::OutputMethod () {
   rdata = rdata_var;
 
   // Read request: generate 'rp_rd', 'ack'...
+  sig_wbuf_dont_remove = 0;
   if (rd == 1) {
     // INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
     if (wbuf_hit >= 0 && (bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
       // we can serve all bytes from the write buffer
       // INFO ("LSU: Serving all bytes from the write buffer");
-      rdata_var = wbuf_data[wbuf_hit];
+      if (wbuf_hit == 0) sig_wbuf_dont_remove = 1;
+        // make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
       rp_rd = 0;   // no request to memory
       ack = 1;
     }
@@ -169,6 +173,7 @@ void MLsu::OutputMethod () {
       ack = rp_ack;
     }
   }
+
   // INFOF (("LSU:   bsel = %x, W := wbuf_valid[wbuf_hit].read () = %x, ~W = %x, bsel & ~W = %x",
   //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
 
@@ -192,7 +197,7 @@ void MLsu::OutputMethod () {
     ack = wp_ack;
   }
   else {
-    wp_wr = (wbuf_valid[0].read () != 0);
+    wp_wr = wbuf_dirty0; // (wbuf_valid[0].read () != 0);
     wp_writeback = 0;
     wp_invalidate = 0;
   }
@@ -208,6 +213,7 @@ void MLsu::TransitionThread () {
   // Reset...
   for (n = 0; n < MAX_WBUF_SIZE; n++)
     wbuf_valid[n] = 0;
+  wbuf_dirty0 = 0;
 
   // Main loop...
   while (1) {
@@ -218,6 +224,7 @@ void MLsu::TransitionThread () {
       wbuf_entry = FindWbufHit (adr);
       if (wbuf_entry < 0) wbuf_entry = FindEmptyWbufEntry ();
       if (wbuf_entry < 0) wbuf_entry = MAX_WBUF_SIZE;
+      // INFOF (("LSU receiving write operation: wbuf_entry = %i", wbuf_entry));
     }
     else
       wbuf_entry = -1;   // no need to store new entry
@@ -241,11 +248,10 @@ void MLsu::TransitionThread () {
     }
 
     // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
-    if (wp_ack == 1 && rd == 0) {    // entry MUST be removed and invalidated once successfully written
-      // TBD: no changes (removes) in the buffer must happen during reads, but presently, multiple writes occur
-      // Solutions:
-      //   a) Introduce 'dirty' bit for each wbuf entry; on write reset dirty bit, on rd=0 remove buffer entry
-      //   b) Introduce register for read forwarding for the case the reader does not pick its data immediately
+    if (wp_ack == 1) wbuf_dirty0 = 0;
+    if (sig_wbuf_dont_remove == 0 && (wbuf_dirty0 == 0 || wp_ack == 1) && wbuf_entry != 0) {
+      // we can safely remove the data...
+      wbuf_dirty0 = (wbuf_valid[1].read () != 0);
       for (n = 0; n < MAX_WBUF_SIZE-1; n++) {
         wbuf_adr[n] = wbuf_adr[n+1];
         wbuf_data[n] = wbuf_data[n+1];
@@ -266,6 +272,7 @@ void MLsu::TransitionThread () {
       }
       wbuf_data[wbuf_entry] = data;
       wbuf_valid[wbuf_entry] = valid | sig_wbbsel.read();
+      if (wbuf_entry == 0) wbuf_dirty0 = 1;
       //INFOF (("LSU storing data word 0x%08x to entry #%i, bsel = %i",
       //        data, wbuf_entry, (int) (wbuf_valid[wbuf_entry].read () | sig_wbbsel.read())));
     }

@@ -87,10 +87,12 @@ protected:
   sc_signal<TWord> wbuf_adr [MAX_WBUF_SIZE];   // only bits 31:2 are relevant!!
   sc_signal<TWord> wbuf_data [MAX_WBUF_SIZE];
   sc_signal<sc_uint<4> > wbuf_valid [MAX_WBUF_SIZE];
+  sc_signal<bool> wbuf_dirty0;  // is '1' if entry 0 needs to be written back
 
   // Internal signals...
   sc_signal<TWord> sig_wbdata;
   sc_signal<sc_uint<4> > sig_wbbsel;
+  sc_signal<bool> sig_wbuf_dont_remove;
 
   // Helper methods...
   int FindWbufHit (TWord adr);
