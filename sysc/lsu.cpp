@@ -245,7 +245,8 @@ void MLsu::TransitionThread () {
     if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE) {
       data = wbuf_data[wbuf_entry].read ();
       valid = wbuf_valid[wbuf_entry].read ();
-    }
+    } else
+        valid = 0;
 
     // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
     if (wp_ack == 1) wbuf_dirty0 = 0;
