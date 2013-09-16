@@ -157,12 +157,12 @@ void MLsu::OutputMethod () {
   // Read request: generate 'rp_rd', 'ack'...
   sig_wbuf_dont_remove = 0;
   if (rd == 1) {
+    if (wbuf_hit == 0) sig_wbuf_dont_remove = 1;
+      // make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
     // INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
     if (wbuf_hit >= 0 && (bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
       // we can serve all bytes from the write buffer
       // INFO ("LSU: Serving all bytes from the write buffer");
-      if (wbuf_hit == 0) sig_wbuf_dont_remove = 1;
-        // make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
       rp_rd = 0;   // no request to memory
       ack = 1;
     }

@@ -384,7 +384,7 @@ public:
   sc_in<bool> clk, reset;
 
   //   With (CPU) port...
-  //   - All input ports must be held until 'port_ack' is asserted, at least one cycle..
+  //   - All input ports must be held until 'port_ack' is asserted, at least one cycle.
   //   - 'port_ack' is issued for exactly one cycle (no full handshake).
   //   - 'port_ack' may be asserted already in the same cycle as the request was issued.
   //   - The next request may be issued at earliest one cycle after 'port_ack' was asserted. (TBD: allow in the ACK cycle?)
