@@ -2,7 +2,7 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2012 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
   The file is based on the file '16450.c' from the OpenRISC project:

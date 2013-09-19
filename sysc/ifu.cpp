@@ -2,7 +2,7 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2012 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
  *************************************************************************/
@@ -40,6 +40,7 @@ void MIfu::Trace (sc_trace_file *tf, int level) {
   TRACE_BUS (tf, adr_buf, IFU_BUF_SIZE);
   TRACE (tf, insn_top);
   TRACE (tf, adr_top);
+  TRACE (tf, last_rp_ack);
 }
 
 
@@ -65,14 +66,13 @@ void MIfu::OutputMethod () {
   npc_valid = (adr_top > 2);
 
   // Towards MemU...
-  //rp_rd = (state_reg == s_ifu_reading) ? 1 : 0;
-  rp_adr = adr_buf[insn_top];
+  //rp_adr = adr_buf[insn_top];
 }
 
 
 void MIfu::TransitionMethod () {
-  int n, insn_top_var, adr_top_var;
-  bool ir_valid_var;
+  int n, insn_top_var, adr_top_var, ofs, next_insn_top_var;
+  bool ir_valid_var, have_jump;
 
   insn_top_var = insn_top;
   adr_top_var = adr_top;
@@ -112,22 +112,14 @@ void MIfu::TransitionMethod () {
   }
 
   // Issue new memory read request if appropriate...
-  switch (state_reg.read ()) {
-    case s_ifu_idle:
-      if (adr_top_var > insn_top && insn_top_var < IFU_BUF_SIZE         // Adress & space available?
-          && !(insn_top_var >= 2 && IsJump(insn_buf[insn_top_var-2]))   // no jump pending?
-          && next == 0 && jump == 0 && last_rp_ack == 0) {              // nothing changed to the buffer that may confuse the jump-pending test
-	rp_rd = 1;
-        //rp_adr = adr_buf[insn_top_var];
-	state_reg = s_ifu_reading;
-      }
-      break;
-    case s_ifu_reading:
-      if (rp_ack == 1) {
-        rp_rd = 0;
-	state_reg = s_ifu_idle;
-      }
-      break;
+  rp_rd = 0; // default
+  ofs = (next == 1 ? 1 : 0); // offset to where to find the current top instruction in 'insn_buf'
+  next_insn_top_var = insn_top_var;
+  if (rp_ack == 1) next_insn_top_var++;
+  if (adr_top_var > next_insn_top_var && next_insn_top_var < IFU_BUF_SIZE         // Adress & space available?
+      && !(next_insn_top_var >= 2 && IsJump(insn_buf[next_insn_top_var+ofs-2]))) {   // no jump pending?
+    rp_adr = adr_buf[next_insn_top_var+ofs];
+    rp_rd = 1;
   }
 
   // Handle reset (must dominate)...
@@ -135,7 +127,6 @@ void MIfu::TransitionMethod () {
     insn_top_var = 1;
     adr_buf[0] = 0x100 - 4;
     adr_top_var = 1;
-    state_reg = s_ifu_idle;
     rp_rd = 0;
   }
 

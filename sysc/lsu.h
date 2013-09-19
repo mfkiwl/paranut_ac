@@ -2,7 +2,7 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2012 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
   Description:
@@ -70,6 +70,7 @@ public:
       sensitive << rd << wr << flush << cache_writeback << cache_invalidate << rlink_wcond;
       sensitive << width << exts << adr << wdata;
       sensitive << rp_ack << rp_data << wp_ack;
+      sensitive << wbuf_dirty0;
       for (int n = 0; n < MAX_WBUF_SIZE; n++)
         sensitive << wbuf_adr[n] << wbuf_data[n] << wbuf_valid[n];
   }
@@ -92,7 +93,7 @@ protected:
   // Internal signals...
   sc_signal<TWord> sig_wbdata;
   sc_signal<sc_uint<4> > sig_wbbsel;
-  sc_signal<bool> sig_wbuf_dont_remove;
+  sc_signal<bool> sig_wbuf_dont_change0;
 
   // Helper methods...
   int FindWbufHit (TWord adr);

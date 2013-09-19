@@ -24,13 +24,13 @@ memu_tb: $(MEMU_TB_OBJ)
 
 sim: paranut_tb test_app
 	@echo; echo "### Simulating..."; echo
-	./paranut_tb -m 0x700 0x7ff $(TEST_APP_DIR)/$(TEST_APP)
+	./paranut_tb -c -m 0x700 0x7ff $(TEST_APP_DIR)/$(TEST_APP)
 
-test_app:
+test_app: paranut_tb
 	@echo; echo "### Making test application"; echo
 	+make -C $(TEST_APP_DIR) $(TEST_APP)
 
-hello_newlib:
+hello_newlib: paranut_tb
 	@echo; echo "### Making 'hello_newlib"; echo
 	+make -C ../sw/hello_newlib hello_newlib
 	@echo; echo "### Simulating..."; echo

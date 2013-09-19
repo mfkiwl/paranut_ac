@@ -2,7 +2,7 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2012 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
   Description:
@@ -22,13 +22,6 @@
 
 
 #define IFU_BUF_SIZE 4
-
-
-typedef enum {
-  s_ifu_idle = 0,
-  s_ifu_reading = 1
-} e_ifu_state;
-
 
 
 SC_MODULE(MIfu) {
@@ -58,7 +51,6 @@ public:
     //SC_CTHREAD (MainThread, clk.pos ());
     //  reset_signal_is (reset, true);
     SC_METHOD (OutputMethod);
-      sensitive << state_reg;
       for (int n = 0; n < IFU_BUF_SIZE; n++) sensitive << insn_buf[n] << adr_buf[n];
       sensitive << insn_top << adr_top;
     SC_METHOD (TransitionMethod);
@@ -74,8 +66,6 @@ public:
   void TransitionMethod ();
 
 protected:
-  sc_signal<e_ifu_state> state_reg;
-
   sc_signal<TWord> insn_buf[IFU_BUF_SIZE];
   sc_signal<TWord> adr_buf[IFU_BUF_SIZE];
   sc_signal<int> insn_top, adr_top;   // 'insn_top': first buffer place with not-yet-known contents (insn)

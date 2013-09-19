@@ -2,7 +2,7 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2012 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
  *************************************************************************/
@@ -62,7 +62,7 @@ void MLsu::Trace (sc_trace_file *tf, int level) {
   // Internal signals...
   TRACE (tf, sig_wbdata);
   TRACE (tf, sig_wbbsel);
-  TRACE (tf, sig_wbuf_dont_remove);
+  TRACE (tf, sig_wbuf_dont_change0);
 }
 
 
@@ -92,6 +92,7 @@ void MLsu::OutputMethod () {
   TWord rdata_var, wbdata;
   sc_uint<4> bsel;
   int n, wbuf_hit, wbuf_new;
+  bool wbuf_dont_change0_var;
 
   // Set defaults (don't cares are left open)...
   ack = align_err = 0;
@@ -155,11 +156,11 @@ void MLsu::OutputMethod () {
   rdata = rdata_var;
 
   // Read request: generate 'rp_rd', 'ack'...
-  sig_wbuf_dont_remove = 0;
+  wbuf_dont_change0_var = 0;
   if (rd == 1) {
-    if (wbuf_hit == 0) sig_wbuf_dont_remove = 1;
+    //INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
+    if (wbuf_hit == 0) wbuf_dont_change0_var = 1;
       // make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
-    // INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
     if (wbuf_hit >= 0 && (bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
       // we can serve all bytes from the write buffer
       // INFO ("LSU: Serving all bytes from the write buffer");
@@ -173,12 +174,13 @@ void MLsu::OutputMethod () {
       ack = rp_ack;
     }
   }
+  sig_wbuf_dont_change0 = wbuf_dont_change0_var;
 
   // INFOF (("LSU:   bsel = %x, W := wbuf_valid[wbuf_hit].read () = %x, ~W = %x, bsel & ~W = %x",
   //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
 
   // Handle write request...
-  if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed ())) {
+  if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed () && !wbuf_dont_change0_var)) {
     ack = 1;   // we can write into the write buffer & the transition thread will do so
   }
 
@@ -246,11 +248,11 @@ void MLsu::TransitionThread () {
       data = wbuf_data[wbuf_entry].read ();
       valid = wbuf_valid[wbuf_entry].read ();
     } else
-        valid = 0;
+      valid = 0;
 
     // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
     if (wp_ack == 1) wbuf_dirty0 = 0;
-    if (sig_wbuf_dont_remove == 0 && (wbuf_dirty0 == 0 || wp_ack == 1) && wbuf_entry != 0) {
+    if (sig_wbuf_dont_change0 == 0 && (wbuf_dirty0 == 0 || wp_ack == 1) && wbuf_entry != 0) {
       // we can safely remove the data...
       wbuf_dirty0 = (wbuf_valid[1].read () != 0);
       for (n = 0; n < MAX_WBUF_SIZE-1; n++) {
@@ -263,7 +265,7 @@ void MLsu::TransitionThread () {
     }
   
     // Store new entry if applicable...
-    if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE && (!AdrIsSpecial (adr) || IsFlushed ())) {
+    if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE && (!AdrIsSpecial (adr) || IsFlushed ()) && (wbuf_entry > 0 || sig_wbuf_dont_change0 == 0)) {
       wbuf_adr[wbuf_entry] = adr.read () & ~3;
       //INFOF (("Old data = 0x%08x", data));
       for (n = 0; n < 4; n++) {
