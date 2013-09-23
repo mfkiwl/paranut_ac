@@ -180,7 +180,7 @@ void MLsu::OutputMethod () {
   //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
 
   // Handle write request...
-  if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed () && !wbuf_dont_change0_var)) {
+  if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed ()) && !wbuf_dont_change0_var) {
     ack = 1;   // we can write into the write buffer & the transition thread will do so
   }
 

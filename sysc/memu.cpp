@@ -511,7 +511,7 @@ void MBusIf::MainThread () {
       }
 
       // Check if write back will be necessary & read cache line to 'odata_reg'...
-      if (tag_reg.read().dirty &&
+      if (tag_reg.read ().dirty &&
           (op_reg.read () == bioWriteback || op_reg.read () == bioFlush || op_reg.read () == bioReplace)) {
 
         tag_out = tag_reg;    // needed to put the 'way' to the outputs...
