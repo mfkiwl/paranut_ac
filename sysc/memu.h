@@ -489,6 +489,10 @@ public:
   //   - Implements mutex for a single cache line (tag + all data banks).
   //   - Writers are supposed to acquire a line lock.
   //   - Reader do not acquire anything => Writers must perform their actions in a safe order.
+  //   - if a line lock request is held, the associated address must not change
+  //   - A line lock may be released during the clock cycle that the last bank/tag access is made,
+  //     given that the bank/tag lock is still held. This allows faster write cycles without write port
+  //     monopolizing a line lock (keeping it permanently up).
   sc_in<bool> req_busif_linelock, req_wp_linelock[WPORTS];
   sc_out<bool> gnt_busif_linelock, gnt_wp_linelock[WPORTS];
 

@@ -1125,7 +1125,8 @@ void MWritePort::MainMethod () {
       bank_req_rd = 1;
       bank_data_out = CombineData (port_bsel, data_reg, port_data);
       if (bank_gnt == 1) {
-        port_ack = 1;   // can acknowledge to port now (write to bank and tag must be commited!)
+        port_ack = 1;   // can acknowledge to port now (write to bank and tag must be committed!)
+        req_linelock = 0;   // avoid that this write port monopolizes the line lock
         bank_wr = 1;
         next_state = s_wp_init;
       }
@@ -1148,30 +1149,12 @@ void MWritePort::MainMethod () {
       req_tagw = 1;
       tag = tag_reg; tag.dirty = 1; tag_out = tag;
       tag_wr = 1;
-      port_ack = 1;   // can acknowledge to port now (write to bank and tag must be commited!)
+      port_ack = 1;   // can acknowledge to port now (write to bank and tag must be committed!)
+      req_linelock = 0;   // avoid that this write port monopolizes the line lock (code below "Handle new access" can be simplified accordingly)
       next_state = s_wp_init;
-
-      // Handle new access...
-      if (port_wr == 1) {
-        if (port_direct == 1) {
-          // Direct (uncached) memory access...
-          req_busif = 1;
-          busif_op = bioDirectWrite;
-          if (gnt_busif == 1 && busif_busy == 0)
-            next_state = s_wp_direct;
-        }
-        else {
-          // Normal (cached) access...
-          req_linelock = 1;
-          tagr_req_rd = 1;
-          if (gnt_tagr == 1) {
-            if (gnt_linelock == 1) next_state = s_wp_read_tag;
-            else next_state = s_wp_request_linelock_only;
-          }
-        }
-      }
       break;
 
+      
     case s_wp_write_bank: // 10
       req_linelock = 1;
       bank_req_rd = 1;
@@ -1179,7 +1162,8 @@ void MWritePort::MainMethod () {
       bank_data_out = CombineData (port_bsel, data_reg, port_data);
       if (bank_gnt == 1) {
         bank_wr = 1;
-        port_ack = 1;   // can acknowledge to port now (write to bank must be commited!)
+        port_ack = 1;   // can acknowledge to port now (write to bank must be committed!)
+        req_linelock = 0;   // avoid that this write port monopolizes the line lock
         next_state = s_wp_init;
       }
       // Can we accept a new request already in this state?
