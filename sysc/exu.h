@@ -106,7 +106,7 @@ public:
     //    (true, 3)    // CePU, all capabilities
     //    (false, 2)   // CoPU supporting modes 0-2
     //    (false, 1)   // CoPU supporting modes 0-1 (no unlinked mode)
-    assert ((_inCePU && _modeCap == 3) || (!_inCePU && modeCap >= 1 && modeCap <= 2));
+    assert ((_inCePU && _modeCap == 3) || (!_inCePU && _modeCap >= 1 && _modeCap <= 2));
 
     SC_CTHREAD (MainThread, clk.pos ());
       reset_signal_is (reset, true);
