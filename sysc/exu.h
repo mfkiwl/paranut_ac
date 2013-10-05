@@ -93,7 +93,7 @@ public:
   sc_out<TWord> lsu_wdata;
 
   //   controller outputs...
-  sc_out<bool> icache_enable, dcache_enable;
+  sc_port<sc_signal_out_if<bool>,1,SC_ZERO_OR_MORE_BOUND> icache_enable, dcache_enable;
 
   //   TBD: timer, interrupt controller ...
 
@@ -125,7 +125,10 @@ public:
 
   // Processes...
   void MainThread ();
-  void OutputThread () { icache_enable = regICE && !cfgDisableCache; dcache_enable = regDCE && !cfgDisableCache; }
+  void OutputThread () {
+    if (icache_enable.size() != 0) icache_enable->write(regICE && !cfgDisableCache);
+    if (dcache_enable.size() != 0) dcache_enable->write(regDCE && !cfgDisableCache);
+  }
 
 protected:
 
