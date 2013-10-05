@@ -331,8 +331,11 @@ public:
     SC_METHOD(TransitionMethod);
       sensitive << clk.pos ();
     SC_METHOD(MainMethod);
-      sensitive << reset << state_reg << bank_sel_reg << busif_hit << tag_in;
-      sensitive << port_rd << port_direct << busif_busy << bank_data_in << gnt_busif << gnt_tagr;
+      sensitive << reset << state_reg << bank_sel_reg << busif_hit;
+      sensitive << port_rd << port_direct << port_adr;
+      sensitive << busif_data << busif_busy;
+      sensitive << bank_data_in << tag_in;
+      sensitive << gnt_tagr << gnt_busif;
       for (int b = 0; b < CACHE_BANKS; b++) sensitive << gnt_bank[b];
   }
 
@@ -640,6 +643,8 @@ public:
   // Constructor/Destructor...
   SC_CTOR(MMemu) {
     InitSubmodules ();
+    SC_METHOD(TransitionMethod);
+      sensitive << clk.pos ();
     InitInterconnectMethod ();
   }
   ~MMemu() { FreeSubmodules (); }
@@ -648,6 +653,7 @@ public:
   void Trace (sc_trace_file *tf, int levels = 1);
 
   // Processes...
+  void TransitionMethod ();
   void InterconnectMethod ();
 
   // Submodules...
@@ -681,6 +687,7 @@ protected:
   sc_signal<sc_uint<4> > busif_bsel;
 
   // Read ports...
+  sc_signal<TWord> rp_busif_data_reg;   // register to delay BusIF data for one clock cycle in accordance with the protocol
   sc_signal<TWord> rp_busif_data;
   sc_signal<EBusIfOperation> rp_busif_op[RPORTS];
   sc_signal<bool> rp_tag_rd[RPORTS], rp_bank_rd[RPORTS];

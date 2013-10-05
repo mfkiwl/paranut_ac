@@ -287,7 +287,7 @@ void CMemory::Dump (TWord adr0, TWord adr1) {
   printPeriod = false;
   for (adr = MAX (base, adr0); adr < MIN (base + size, adr1); adr += 4) {
     val = ReadWord (adr);
-    if (/* val != lastVal || */ val != 0) {
+    if (val != lastVal /*/ val != 0 */) {
       if (printPeriod) printf ("%21s...\n", "");
       printf ("%s\n", GetDumpStr (adr));
       printPeriod = false;

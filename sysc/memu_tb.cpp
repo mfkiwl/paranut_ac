@@ -819,9 +819,39 @@ void RunTest (CMemory *mem) {
 // **************** Main ************************
 
 
+int cfgHelp = 0;
+
+
 int sc_main (int argc, char *argv []) {
   CMemory memory;
-  int n;
+  int n, arg;
+
+  // Parse command line...
+  arg = 1;
+  while (arg < argc && argv[arg][0] == '-') {
+    switch (argv[arg][1]) {
+    case 't':
+      cfgVcdLevel = MAX (0, MIN (9, argv[arg][2] - '0'));
+      fprintf (stderr, "(cfg) vcdLevel = %i\n", cfgVcdLevel);
+      break;
+    case 'h':
+      cfgHelp = 1;
+      break;
+    default:
+      printf ("ERROR: Unknown option '%s'.\n", argv[arg]);
+      cfgHelp = 1;
+      arg = argc;
+    }
+    arg++;
+  }
+  if (cfgHelp) {
+    puts ("Usage: paranut_tb [<options>] <OR32 ELF file>\n"
+          "\n"
+          "Options:\n"
+          "  -t<n>: set VCD trace level (0 = no trace file; default = 2)\n"
+         );
+    return 3;
+  }
 
   sc_set_time_resolution (1.0, SC_NS);
 
@@ -909,7 +939,7 @@ int sc_main (int argc, char *argv []) {
   TRACE_BUS(tf, wp_adr, WPORTS);
   TRACE_BUS(tf, wp_data, WPORTS);
 
-  //memu.Trace (tf, 2);
+  memu.Trace (tf, cfgVcdLevel);
   //memu.Trace (NULL, 2);
   //memu.writePorts[0]->Trace (NULL);
 

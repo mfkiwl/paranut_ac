@@ -689,6 +689,7 @@ void MReadPort::MainMethod () {
 
   // Defaults for outputs...
   port_ack = 0;
+  port_data = busif_data;
   req_busif = 0;
   for (n = 0; n < CACHE_BANKS; n++) req_bank[n] = 0;
   busif_op = bioNothing;
@@ -698,6 +699,7 @@ void MReadPort::MainMethod () {
 
   next_state = state_reg;
   next_bank_sel = bank_sel_reg;
+
 
   // Helper variable...
   index = GetIndexOfAdr (port_adr);
@@ -722,8 +724,8 @@ void MReadPort::MainMethod () {
         else {
           // cached memory access...
           if (busif_hit == 1) {
-            port_data = busif_data;
-            port_ack = 1;
+            port_ack = 1;  // next state must set "port_data = busif_data"
+
           }
           else {
             tagr_req_rd = 1;
@@ -737,9 +739,8 @@ void MReadPort::MainMethod () {
       // Direct access: Wait for response from the BusIf
       busif_op = bioDirectRead;
       req_busif = 1;
-      port_data = busif_data;
       if (busif_hit == 1) {
-        port_ack = 1;
+        port_ack = 1;   // next state must set "port_data = busif_data"
         next_state = s_rp_init;
       }
       break;
@@ -752,7 +753,7 @@ void MReadPort::MainMethod () {
         bank_req_rd = 1;
         if (bank_gnt == 1) {
           next_bank_sel = bank;
-          port_ack = 1;
+          port_ack = 1;   // next state must set "port_data = bank_data_in"
           next_state = s_rp_read_bank;
         }
       }
@@ -764,7 +765,6 @@ void MReadPort::MainMethod () {
       tagr_req_rd = 1;
 
       port_data = bank_data_in;
-      // port_ack = 1;
       next_state = s_rp_init;
 
       // On new request, initiate all actions for the first cycle
@@ -778,8 +778,9 @@ void MReadPort::MainMethod () {
         else {
           // cached memory access...
           if (busif_hit == 1) {
-            port_data = busif_data;
-            port_ack = 1;
+            // port_data = busif_data;
+            port_ack = 1;  // next state must set "port_data = busif_data"
+            next_state = s_rp_init;
           }
           else {
             tagr_req_rd = 1;
@@ -794,8 +795,7 @@ void MReadPort::MainMethod () {
       // incidental BusIf hit if it happens.
       req_busif = 1;
       if (busif_hit == 1) {
-        port_data = busif_data;
-        port_ack = 1;
+        port_ack = 1;  // next state must set "port_data = busif_data"
         next_state = s_rp_init;
       }
       else if (gnt_busif == 1 && busif_busy == 0)
@@ -829,8 +829,7 @@ void MReadPort::MainMethod () {
       req_busif = 1;
       busif_op = bioReplace;
       if (busif_hit == 1) {
-        port_data = busif_data;
-        port_ack = 1;
+        port_ack = 1;  // next state must set "port_data = busif_data"
         next_state = s_rp_init;
       }
       break;
@@ -1734,6 +1733,7 @@ void MMemu::Trace (sc_trace_file *tf, int levels) {
   TRACE(tf, busif_bsel);
 
   // Read ports...
+  TRACE(tf, rp_busif_data_reg);
   TRACE(tf, rp_busif_data);
   TRACE_BUS(tf, rp_busif_op, RPORTS);
   TRACE_BUS(tf, rp_tag_rd, RPORTS);
@@ -2089,6 +2089,14 @@ void MMemu::InitInterconnectMethod () {
     for (k = 0; k < BR_PORTS; k++)
       sensitive << bankram_wiadr[n][k];
   }
+
+  // Internal registers...
+  sensitive << rp_busif_data_reg;
+}
+
+
+void MMemu::TransitionMethod () {
+  rp_busif_data_reg = busif_data_out[GetBankOfAdr (busif_adr_out)];
 }
 
 
@@ -2181,7 +2189,7 @@ void MMemu::InterconnectMethod () {
     rp_tag_in[p] = tagram_tag_out[cpu];
     rp_bank_data_in[p] = bankram_rdata[rp_bank_sel[p].read ()][cpu % BR_PORTS];
   }
-  rp_busif_data = busif_data_out[GetBankOfAdr (busif_adr_out)];
+  rp_busif_data = rp_busif_data_reg;//busif_data_out[GetBankOfAdr (busif_adr_out)];//rp_busif_data_reg; //
 
   // To write ports...
   for (p = 0; p < WPORTS; p++) {

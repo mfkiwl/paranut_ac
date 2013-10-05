@@ -62,7 +62,9 @@ void MLsu::Trace (sc_trace_file *tf, int level) {
   // Internal signals...
   TRACE (tf, sig_wbdata);
   TRACE (tf, sig_wbbsel);
-  TRACE (tf, sig_wbuf_dont_change0);
+  TRACE (tf, sig_wbuf_entry);
+  TRACE (tf, sig_wbuf_remove);
+  TRACE (tf, sig_wbuf_write);
 }
 
 
@@ -91,7 +93,7 @@ bool MLsu::IsFlushed () {
 void MLsu::OutputMethod () {
   TWord rdata_var, wbdata;
   sc_uint<4> bsel;
-  int n, wbuf_hit, wbuf_new;
+  int n, wbuf_hit, wbuf_new, wbuf_entry;
   bool wbuf_dont_change0_var;
 
   // Set defaults (don't cares are left open)...
@@ -156,11 +158,8 @@ void MLsu::OutputMethod () {
   rdata = rdata_var;
 
   // Read request: generate 'rp_rd', 'ack'...
-  wbuf_dont_change0_var = 0;
   if (rd == 1) {
     //INFOF (("LSU: read request, adr = %x, bsel = 0x%x, wbuf_hit = %i", adr.read (), (int) bsel, wbuf_hit));
-    if (wbuf_hit == 0) wbuf_dont_change0_var = 1;
-      // make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
     if (wbuf_hit >= 0 && (bsel & ~wbuf_valid[wbuf_hit].read ()) == 0x0) {
       // we can serve all bytes from the write buffer
       // INFO ("LSU: Serving all bytes from the write buffer");
@@ -174,15 +173,9 @@ void MLsu::OutputMethod () {
       ack = rp_ack;
     }
   }
-  sig_wbuf_dont_change0 = wbuf_dont_change0_var;
 
   // INFOF (("LSU:   bsel = %x, W := wbuf_valid[wbuf_hit].read () = %x, ~W = %x, bsel & ~W = %x",
   //        (int) bsel, (int) wbuf_valid[wbuf_hit].read (), (int) ~wbuf_valid[wbuf_hit].read (), (int) (bsel & ~wbuf_valid[wbuf_hit].read ())));
-
-  // Handle write request...
-  if (wr == 1 && (wbuf_hit >= 0 || wbuf_new >= 0) && (!AdrIsSpecial (adr) || IsFlushed ()) && !wbuf_dont_change0_var) {
-    ack = 1;   // we can write into the write buffer & the transition thread will do so
-  }
 
   // Handle flush mode (generate 'ack')...
   if (flush && IsFlushed ())
@@ -203,12 +196,60 @@ void MLsu::OutputMethod () {
     wp_writeback = 0;
     wp_invalidate = 0;
   }
+
+  // Determine place for (eventual) new wbuf entry...
+  if (wr == 1) {
+    wbuf_entry = FindWbufHit (adr);
+    if (wbuf_entry < 0 || AdrIsSpecial(adr)) wbuf_entry = FindEmptyWbufEntry ();
+    if (wbuf_entry < 0) wbuf_entry = MAX_WBUF_SIZE;
+    // INFOF (("LSU receiving write operation: wbuf_entry = %i", wbuf_entry));
+  }
+  else
+    wbuf_entry = -1;   // no need to store new entry
+
+  // Handle cache control operations...
+  if (cache_writeback == 1 || cache_invalidate == 1) {
+    ASSERT (wr == 0 && rd == 0);
+    wbuf_entry = IsFlushed () ? 0 : -1;
+    // Cache control is only allowed if the write buffer is flushed.
+    // If asserted, the adress and (not necessary) data are copied to the buffer
+    // reusing the same logic as for writes.
+    // The 'valid' fields remain zero, so that 'IsFlushed ()' will still report "true".
+    // The output method is responsible for forwarding the ACK signal from the write port
+    // to the EXU.
+  }
+  sig_wbuf_entry = wbuf_entry;
+
+  wbuf_dont_change0_var = 0;
+  // this prevents changes of the wbuf in 2 situations:
+  // - For a read hit in wbuf slot #0:
+  //     make sure the wbuf is not changed in this clock cycle so that the forwarded data is still present in the next cycle
+  // - For a write hit in wbuf slot #0:
+  //     don't write into slot 0 if it is already writing
+  if (wbuf_dirty0 == 1 && ((rd == 1 and wbuf_hit == 0) || (wr == 1 && wbuf_entry == 0))) wbuf_dont_change0_var = 1;
+
+  // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
+  sig_wbuf_remove = 0;
+  if (wbuf_dont_change0_var == 0 && (wbuf_dirty0 == 0 || wp_ack == 1) && wbuf_entry != 0) {
+    // we can safely remove the data...
+    sig_wbuf_remove = 1;
+    wbuf_entry--;  // adjust new entry index, it may now point to the last entry MAX_WBUF_SIZE-1 if buffer was previously full
+  }
+  sig_wbuf_entry_new = wbuf_entry;
+
+  // Handle write request...
+  sig_wbuf_write = 0;
+  if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE && (!(AdrIsSpecial (adr) && wbuf_entry != 0) && wbuf_dont_change0_var == 0)) {
+    // we can write into the write buffer & the transition thread will do so
+    sig_wbuf_write = 1;
+    ack = 1;
+  }
 }
 
 
 void MLsu::TransitionThread () {
   // generates all register contents: wbuf_adr, wbuf_data, wbuf_valid
-  int wbuf_entry, n;
+  int n;
   TWord data;
   sc_uint<4> valid;
 
@@ -221,39 +262,15 @@ void MLsu::TransitionThread () {
   while (1) {
     wait (1);
 
-    // Determine place for (eventual) new wbuf entry...
-    if (wr == 1) {
-      wbuf_entry = FindWbufHit (adr);
-      if (wbuf_entry < 0) wbuf_entry = FindEmptyWbufEntry ();
-      if (wbuf_entry < 0) wbuf_entry = MAX_WBUF_SIZE;
-      // INFOF (("LSU receiving write operation: wbuf_entry = %i", wbuf_entry));
-    }
-    else
-      wbuf_entry = -1;   // no need to store new entry
-
-    // Handle cache control operations...
-    if (cache_writeback == 1 || cache_invalidate == 1) {
-      ASSERT (wr == 0 && rd == 0);
-      wbuf_entry = IsFlushed () ? 0 : -1;
-      // Cache control is only allowed if the write buffer is flushed.
-      // If asserted, the adress and (not necessary) data are copied to the buffer
-      // reusing the same logic as for writes.
-      // The 'valid' fields remain zero, so that 'IsFlushed ()' will still report "true".
-      // The output method is responsible for forwarding the ACK signal from the write port
-      // to the EXU.
-    }
-
     // Read old data if applicable...
-    if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE) {
-      data = wbuf_data[wbuf_entry].read ();
-      valid = wbuf_valid[wbuf_entry].read ();
+    if (sig_wbuf_entry >= 0 && sig_wbuf_entry < MAX_WBUF_SIZE) {
+        data = wbuf_data[sig_wbuf_entry].read ();
+        valid = wbuf_valid[sig_wbuf_entry].read ();
     } else
-      valid = 0;
+        valid = 0;
 
-    // Remove oldest entry if MEMU write / cache_writeback  / cache_invalidate was completed...
     if (wp_ack == 1) wbuf_dirty0 = 0;
-    if (sig_wbuf_dont_change0 == 0 && (wbuf_dirty0 == 0 || wp_ack == 1) && wbuf_entry != 0) {
-      // we can safely remove the data...
+    if (sig_wbuf_remove == 1) {
       wbuf_dirty0 = (wbuf_valid[1].read () != 0);
       for (n = 0; n < MAX_WBUF_SIZE-1; n++) {
         wbuf_adr[n] = wbuf_adr[n+1];
@@ -261,23 +278,22 @@ void MLsu::TransitionThread () {
         wbuf_valid[n] = wbuf_valid[n+1];
       }
       wbuf_valid[MAX_WBUF_SIZE-1] = 0;
-      wbuf_entry--;  // adjust new entry index, it may now point to the last entry MAX_WBUF_SIZE-1 if buffer was previously full
     }
-  
+
     // Store new entry if applicable...
-    if (wbuf_entry >= 0 && wbuf_entry < MAX_WBUF_SIZE && (!AdrIsSpecial (adr) || IsFlushed ()) && (wbuf_entry > 0 || sig_wbuf_dont_change0 == 0)) {
-      wbuf_adr[wbuf_entry] = adr.read () & ~3;
+    if (sig_wbuf_write == 1) {
+      wbuf_adr[sig_wbuf_entry_new] = adr.read () & ~3;
       //INFOF (("Old data = 0x%08x", data));
       for (n = 0; n < 4; n++) {
         if (sig_wbbsel.read () [n] == 1) {
           data = (data & ~(0xff000000 >> (8*n))) | (sig_wbdata.read() & (0xff000000 >> (8*n)));
         }
       }
-      wbuf_data[wbuf_entry] = data;
-      wbuf_valid[wbuf_entry] = valid | sig_wbbsel.read();
-      if (wbuf_entry == 0) wbuf_dirty0 = 1;
+      wbuf_data[sig_wbuf_entry_new] = data;
+      wbuf_valid[sig_wbuf_entry_new] = valid | sig_wbbsel.read();
+      if (sig_wbuf_entry_new == 0) wbuf_dirty0 = 1;
       //INFOF (("LSU storing data word 0x%08x to entry #%i, bsel = %i",
-      //        data, wbuf_entry, (int) (wbuf_valid[wbuf_entry].read () | sig_wbbsel.read())));
+      //        data, sig_wbuf_entry_new, (int) (wbuf_valid[sig_wbuf_entry_new].read () | sig_wbbsel.read())));
     }
   }
 }

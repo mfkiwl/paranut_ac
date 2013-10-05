@@ -116,7 +116,7 @@ void MIfu::TransitionMethod () {
   ofs = (next == 1 ? 1 : 0); // offset to where to find the current top instruction in 'insn_buf'
   next_insn_top_var = insn_top_var;
   if (rp_ack == 1) next_insn_top_var++;
-  if (adr_top_var > next_insn_top_var && next_insn_top_var < IFU_BUF_SIZE         // Adress & space available?
+  if (adr_top_var > next_insn_top_var && next_insn_top_var+ofs < IFU_BUF_SIZE        // Adress & space available?
       && !(next_insn_top_var >= 2 && IsJump(insn_buf[next_insn_top_var+ofs-2]))) {   // no jump pending?
     rp_adr = adr_buf[next_insn_top_var+ofs];
     rp_rd = 1;

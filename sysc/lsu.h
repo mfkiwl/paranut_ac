@@ -93,7 +93,9 @@ protected:
   // Internal signals...
   sc_signal<TWord> sig_wbdata;
   sc_signal<sc_uint<4> > sig_wbbsel;
-  sc_signal<bool> sig_wbuf_dont_change0;
+  sc_signal<int> sig_wbuf_entry, sig_wbuf_entry_new;
+  sc_signal<bool> sig_wbuf_remove;
+  sc_signal<bool> sig_wbuf_write;
 
   // Helper methods...
   int FindWbufHit (TWord adr);
