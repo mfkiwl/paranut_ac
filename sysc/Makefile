@@ -42,6 +42,11 @@ dhrystone: paranut_tb
 	@echo; echo "### Simulating..."; echo
 	./paranut_tb -t0 ../sw/dhrystone/dhry
 
+coremark: paranut_tb
+	@echo; echo "### Making 'coremark'"; echo
+	+make -C ../sw/coremark_v1.0 compile PORT_DIR=paranut_sim ITERATIONS=2
+	@echo; echo "### Simulating..."; echo
+	./paranut_tb -t0 ../sw/coremark_v1.0/coremark.exe
 	
 depend:
 	makedepend -Y $(PARANUT_TB_SRC) $(MEMU_TB_SRC) # -- $(CFLAGS) -- $(PN_SRC) $(MEMU_TB_SRC)
