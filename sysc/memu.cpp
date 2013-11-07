@@ -818,7 +818,11 @@ void MReadPort::MainMethod () {
       tagr_req_rd = 1;
       if (tag_in.read ().valid == 1) {
         bank_req_rd = 1;
-        if (bank_gnt == 1) next_state = s_rp_read_bank;
+        if (bank_gnt == 1) {
+          next_bank_sel = bank;
+          port_ack = 1;   // next state must set "port_data = bank_data_in"
+          next_state = s_rp_read_bank;
+        }
       }
       else
         next_state = s_rp_miss_replace;
