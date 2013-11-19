@@ -58,8 +58,10 @@ int sc_main (int argc, char *argv []) {
   CUart uart;
   char *elfFileName;
   int arg, dumpFrom, dumpTo;
+  bool dumpVHDL;
 
   // Parse command line...
+  dumpVHDL = false;
   dumpFrom = dumpTo = 0;
   elfFileName = NULL;
   arg = 1;
@@ -80,6 +82,9 @@ int sc_main (int argc, char *argv []) {
       dumpTo = (int) strtol (argv[++arg], NULL, 0);
       fprintf (stderr, "(cfg) dumping memory from 0x%x to 0x%x (%s to %s)\n", dumpFrom, dumpTo, argv[arg-1], argv[arg]);
       break;
+    case 'v':
+      dumpVHDL = true;
+      break;
     default:
       printf ("ERROR: Unknown option '%s'.\n", argv[arg]);
       arg = argc;
@@ -95,13 +100,14 @@ int sc_main (int argc, char *argv []) {
           "  -i: generate instruction trace\n"
           "  -c: disable caching\n"
           "  -m <from> <to>: dump memory region before/after running the program"
+          "  -v: dump program memory content to VHDL file"
          );
     return 3;
   }
 
   // Read ELF file...
   fprintf (stderr, "(sim) Reading ELF file '%s'...\n", elfFileName);
-  if (!memory.ReadFile (elfFileName)) {
+  if (!memory.ReadFile (elfFileName, dumpVHDL)) {
     printf ("ERROR: Unable to read ELF file '%s'.\n", elfFileName);
     return 3;
   }

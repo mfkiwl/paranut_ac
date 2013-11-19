@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <string>
 
 #include "or32-elf.h"
 
@@ -61,7 +62,7 @@ void CMemory::Init (TWord _base, TWord _size) {
 #define PRIx32 "x"
 
 
-bool CMemory::ReadFile  (char *filename) {
+bool CMemory::ReadFile  (char *filename, bool dumpVHDL) {
   FILE *inputfs;
   struct elf32_hdr elfhdr;
   struct elf32_phdr *elf_phdata = NULL;
@@ -222,6 +223,9 @@ bool CMemory::ReadFile  (char *filename) {
     }
   }
 
+  if (dumpVHDL)
+    DumpVHDL(filename, adr);
+
   if (NULL != str_tbl) free (str_tbl);
   if (NULL != sym_tbl) free (sym_tbl);
   free (s_str);
@@ -232,6 +236,35 @@ bool CMemory::ReadFile  (char *filename) {
 }
 
 
+void CMemory::DumpVHDL (char *filename, unsigned size) {
+  TWord adr;
+  FILE *outputfs;
+
+  std::string fname = std::string(filename);
+  std::string ofname(fname, fname.find_last_of('/')+1);
+  if (!(outputfs = fopen ((ofname + "_mem_dump.vhd").c_str(), "w"))) {
+    printf ("\nError: Unable to open file '%s_mem_dump.vhd' for writing.\n", ofname.c_str());
+    return;
+  }
+
+  size += 4;
+  PRINTF (outputfs, "library ieee;\n");
+  PRINTF (outputfs, "use ieee.std_logic_1164.all;\n\n");
+  PRINTF (outputfs, "library paranut;\n");
+  PRINTF (outputfs, "use paranut.types.all;\n\n");
+  PRINTF (outputfs, "package prog_mem is\n\n");
+  PRINTF (outputfs, "\tconstant PROG_SIZE : integer := %u;\n\n", size);
+  PRINTF (outputfs, "\tconstant PROG_DATA : mem_type(0 to PROG_SIZE/4-1) := (\n");
+  for (adr = base; adr < base + size; adr += 4) {
+    PRINTF (outputfs, "\t\t%s\n", GetDumpStrVHDL (adr));
+  }
+  PRINTF (outputfs, "\t\tothers => X\"00000000\"\n");
+  PRINTF (outputfs, "\t);\n\n");
+  PRINTF (outputfs, "end package;");
+
+  fclose(outputfs);
+  printf ("\nDumped program memory content to '%s_mem_dump.vhd'\n", ofname.c_str());
+}
 
 
 // ***** Labels *****
@@ -271,6 +304,17 @@ char *CMemory::GetDumpStr (TWord adr) {
   return ret;
 }
 
+char *CMemory::GetDumpStrVHDL (TWord adr) {
+  static char ret[200];
+
+  TByte *bytes;
+  bytes = &data[adr-base];
+  sprintf (ret, "16#%04x# => X\"%02x%02x%02x%02x\",",
+           adr/4,
+           bytes[0], bytes[1], bytes[2], bytes[3]
+           );
+  return ret;
+}
 
 void CMemory::Dump (TWord adr0, TWord adr1) {
   TWord val, lastVal, adr, i;

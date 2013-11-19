@@ -74,14 +74,16 @@ public:
 #endif
 
   // Read ELF...
-  bool ReadFile (char *fileName);
+  bool ReadFile (char *fileName, bool dumpVHDL);
 
   // Labels...
   CLabel *FindLabel (TWord adr);
 
   // Dumping...
   char *GetDumpStr (TWord adr);
+  char *GetDumpStrVHDL (TWord adr);
   void Dump (TWord adr0 = 0, TWord adr1 = 0xffffffff);
+  void DumpVHDL (char *filename, unsigned size);
 
 protected:
   TByte *data;
