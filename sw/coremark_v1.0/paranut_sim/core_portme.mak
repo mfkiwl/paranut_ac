@@ -37,9 +37,6 @@ PORT_SRCS = $(PORT_DIR)/core_portme.c
 #LOAD = echo Loading done
 #RUN = 
 
-LOAD = echo Nothing to do
-RUN = echo bla
-
 OEXT = .o
 EXE = .exe
 

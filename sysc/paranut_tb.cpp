@@ -99,7 +99,7 @@ int sc_main (int argc, char *argv []) {
           "  -t<n>: set VCD trace level (0 = no trace file; default = 2)\n"
           "  -i: generate instruction trace\n"
           "  -c: disable caching\n"
-          "  -m <from> <to>: dump memory region before/after running the program"
+          "  -m <from> <to>: dump memory region before/after running the program\n"
           "  -v: dump program memory content to VHDL file"
          );
     return 3;
