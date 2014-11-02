@@ -1,5 +1,5 @@
-CFLAGS = -g -O3 -I/opt/systemc-2.3.0/include # -Wfatal-errors
-LDFLAGS = -L/opt/systemc-2.3.0/lib-linux64 -lsystemc-2.3.0 # -Wfatal-errors
+CFLAGS = -g -O3 -I/opt/systemc-2.3.1/include # -Wfatal-errors
+LDFLAGS = -L/opt/systemc-2.3.1/lib-linux64 -lsystemc-2.3.1 # -Wfatal-errors
 
 MEMU_TB_SRC = base.cpp lfsr.cpp memu.cpp memory.cpp uart16450.cpp peripherals.cpp memu_tb.cpp
 MEMU_TB_OBJ = base.o lfsr.o memu.o memory.o uart16450.o peripherals.o memu_tb.o
