@@ -12,7 +12,11 @@ $(ENTITY_NAME).ngc: $(XST_MODULE_SRC)
 	echo "### Writing '$${TOP}.prj'..."; \
 	echo "" > $${TOP}.prj; \
 	for F in $^; do \
-		echo "vhdl $(WORKLIB) $${F}" >> $${TOP}.prj; \
+		if [[ $${F##*.} == "v" ]]; then \
+			echo "verilog $(WORKLIB) $${F}" >> $${TOP}.prj; \
+		else \
+			echo "vhdl $(WORKLIB) $${F}" >> $${TOP}.prj; \
+		fi; \
 	done; \
 	# Create .ifn file... \
 	IFN=$${TOP}.ifn; \
@@ -29,7 +33,6 @@ $(ENTITY_NAME).ngc: $(XST_MODULE_SRC)
 		echo "-top $${TOP}" >> $${IFN}; \
 		echo "-iobuf $(IOBUF)" >> $${IFN}; \
 		echo "-p $(XILINX_DEVICE_PART)" >> $${IFN}; \
-		echo "-ifmt vhdl" >> $${IFN}; \
 		echo "-opt_mode Speed" >> $${IFN}; \
 		echo "-opt_level 1" >> $${IFN}; \
 		echo "-rtlview yes" >> $${IFN}; \
@@ -57,4 +60,4 @@ xst-bit: $(ENTITY_NAME).bit
 
 xst-clean:
 	rm -rf $(ENTITY_NAME)_tb *.ghw *.o *.prj *.log $(ENTITY_NAME).ngc *.ngr \
-	*.bit *.ifn *.ipf xlnx_auto_* *.xrpt _xmsgs *.xmsgs *.cf xst_work implement \
+	*.bit *.ifn *.ipf xlnx_auto_* *.xrpt _xmsgs *.xmsgs *.cf *.lso xst_work implement \
