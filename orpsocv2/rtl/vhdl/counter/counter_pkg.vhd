@@ -28,7 +28,7 @@ use ieee.std_logic_1164.all;
 package counter_pkg is
 
     component wb_counter is
-        generic (N_COUNTER : integer range 1 to 16 := 4);
+        generic (N_COUNTER : integer range 1 to 16 := 1);
         port (
                  -- Ports (WISHBONE slave)
                  wb_clk     : in std_logic;

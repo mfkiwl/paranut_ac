@@ -27,11 +27,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library paranut;
-use paranut.paranut_lib.all;
 use paranut.counter_pkg.all;
 
 entity wb_counter is
-    generic (N_COUNTER : integer range 1 to 16 := 4);
+    generic (N_COUNTER : integer range 1 to 16 := 1);
     port (
              -- Ports (WISHBONE slave)
              wb_clk     : in std_logic;
@@ -104,19 +103,19 @@ begin
         if (wb_stb_i = '1') then
             if (wb_we_i = '1') then
                 if (reg_adr = "00") then
-                    v.ctrl(conv_integer(cntr_adr)) := wb_dat_i;
+                    v.ctrl(to_integer(unsigned(cntr_adr))) := wb_dat_i;
                 elsif (reg_adr = "01") then
-                    v.div(conv_integer(cntr_adr)) := wb_dat_i;
+                    v.div(to_integer(unsigned(cntr_adr))) := wb_dat_i;
                 end if;
             else
                 -- 'dat_o' generation
                 v.dat_o := (others => '0');
                 if (reg_adr = "00") then
-                    v.dat_o := r.ctrl(conv_integer(cntr_adr));
+                    v.dat_o := r.ctrl(to_integer(unsigned(cntr_adr)));
                 elsif (reg_adr = "01") then
-                    v.dat_o := r.div(conv_integer(cntr_adr));
+                    v.dat_o := r.div(to_integer(unsigned(cntr_adr)));
                 elsif (reg_adr = "10") then
-                    v.dat_o := s_cnt(conv_integer(cntr_adr));
+                    v.dat_o := s_cnt(to_integer(unsigned(cntr_adr)));
                 end if;
             end if;
         end if;

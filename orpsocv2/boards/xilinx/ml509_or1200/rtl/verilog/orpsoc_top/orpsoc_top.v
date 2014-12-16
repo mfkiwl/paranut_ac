@@ -1438,8 +1438,6 @@ reg [9:0] 				  flash_arb_timeout;
       .wb_we_i				(wbs_d_counter0_we_i),
       .wb_cyc_i				(wbs_d_counter0_cyc_i),
       .wb_stb_i				(wbs_d_counter0_stb_i),
-      .wb_cti_i				(wbs_d_counter0_cti_i),
-      .wb_bte_i				(wbs_d_counter0_bte_i),
       .wb_dat_o				(wbs_d_counter0_dat_o),
       .wb_ack_o				(wbs_d_counter0_ack_o),
       .wb_err_o				(wbs_d_counter0_err_o),
