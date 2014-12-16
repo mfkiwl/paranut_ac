@@ -394,7 +394,7 @@
 // implement MAC, multiplier (non-serial) needs to be
 // implemented.
 //
-`define OR1200_MAC_IMPLEMENTED
+//`define OR1200_MAC_IMPLEMENTED
 
 //
 // Implement optional l.div/l.divu instructions
@@ -403,7 +403,7 @@
 // to save area.
 //
 //
-`define OR1200_DIV_IMPLEMENTED
+//`define OR1200_DIV_IMPLEMENTED
 
 //
 // Serial multiplier.
@@ -920,7 +920,7 @@
 //
 
 // Define it if you want DU implemented
-`define OR1200_DU_IMPLEMENTED
+//`define OR1200_DU_IMPLEMENTED
 
 //
 // Define if you want HW Breakpoints
@@ -1065,7 +1065,7 @@
 //
 
 // Define it if you want PIC implemented
-`define OR1200_PIC_IMPLEMENTED
+//`define OR1200_PIC_IMPLEMENTED
 
 // Define number of interrupt inputs (2-31)
 `define OR1200_PIC_INTS 31
@@ -1094,7 +1094,7 @@
 //
 
 // Define it if you want TT implemented
-`define OR1200_TT_IMPLEMENTED
+//`define OR1200_TT_IMPLEMENTED
 
 // Address offsets of TT registers inside TT group
 `define OR1200_TT_OFS_TTMR 1'd0
@@ -1330,7 +1330,7 @@
 // Define to enable default behavior of cache as write through
 // Turning this off enabled write back statergy
 //
-`define OR1200_DC_WRITETHROUGH
+//`define OR1200_DC_WRITETHROUGH
 
 // Define to enable stores from the stack not doing writethrough.
 // EXPERIMENTAL

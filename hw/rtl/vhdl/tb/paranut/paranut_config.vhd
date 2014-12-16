@@ -32,7 +32,7 @@ package paranut_config is
     constant CFG_NUT_LITTLE_ENDIAN      : boolean := false;
 
     -- Generate histograms for evaluation
-    constant CFG_NUT_HISTOGRAM          : boolean := true;
+    constant CFG_NUT_HISTOGRAM          : boolean := false;
 
     ------------------------------------------------------
     -- IFU
@@ -59,17 +59,17 @@ package paranut_config is
     -- 0 : serial shift, 1 : generic shifter, 2 barrell shifter
     constant CFG_EXU_SHIFT_IMPL         : integer range 0 to 2 := 2;
     -- Number of pipeline stages for embedded multiplier
-    constant CFG_EXU_MUL_PIPE_STAGES    : integer range 1 to 5 := 1;
+    constant CFG_EXU_MUL_PIPE_STAGES    : integer range 1 to 5 := 3;
 
     ------------------------------------------------------
     -- MEMU
     ------------------------------------------------------
     -- Number of cache banks (ld)
-    constant CFG_MEMU_CACHE_BANKS_LD    : natural range 1 to 8 := 2;
+    constant CFG_MEMU_CACHE_BANKS_LD    : natural range 1 to 8 := 3;
     constant CFG_MEMU_CACHE_BANKS       : natural := 2 ** CFG_MEMU_CACHE_BANKS_LD;
     
     -- Number of cache sets (ld)
-    constant CFG_MEMU_CACHE_SETS_LD     : natural range 1 to 12 := 8;
+    constant CFG_MEMU_CACHE_SETS_LD     : natural range 1 to 12 := 9;
     constant CFG_MEMU_CACHE_SETS        : natural := 2 ** CFG_MEMU_CACHE_SETS_LD;
     
     -- Number of cache ways (ld)

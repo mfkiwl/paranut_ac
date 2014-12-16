@@ -145,11 +145,11 @@ module clkgen
    defparam    dcm0.CLKFX_DIVIDE      = 3;
 
    // Generate 66 MHz from CLKDV
-   defparam    dcm0.CLKDV_DIVIDE      = 3.0;
+   //defparam    dcm0.CLKDV_DIVIDE      = 3.0;
    // Generate 50 MHz from CLKDV
    //defparam    dcm0.CLKDV_DIVIDE      = 4.0;
    // Generate 25 MHz from CLKDV
-   //defparam    dcm0.CLKDV_DIVIDE      = 8.0;
+   defparam    dcm0.CLKDV_DIVIDE      = 8.0;
 
    BUFG dcm0_clk0_bufg
      (// Outputs
