@@ -78,7 +78,7 @@ begin
     wb_adr, wb_dat_w, wb_dat_r);
 
     counter : wb_counter_wrapper
-    generic map (WB_SLV_ADDR => COUNTER_WB_SLV_ADDR, N_COUNTER => CFG_NUT_CPU_CORES)
+    generic map (WB_SLV_ADDR => COUNTER_WB_SLV_ADDR, N_COUNTER => 1)
     port map (clk, reset, wb_stb, wb_cyc, wb_we, wb_sel, wb_ack, wb_err, wb_rty,
     wb_adr, wb_dat_w, wb_dat_r);
 
