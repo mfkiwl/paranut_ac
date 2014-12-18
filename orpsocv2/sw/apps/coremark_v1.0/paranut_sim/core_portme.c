@@ -21,12 +21,7 @@
 	Provide malloc() functionality in a platform specific way.
 */
 void *portable_malloc(size_t size) {
-	void * p = malloc(size);
-    if (p == NULL) {
-        ee_printf("Error allocating memory\n");
-        exit(1);
-    }
-    return p;
+	return malloc(size);
 }
 /* Function: portable_free
 	Provide free() functionality in a platform specific way.
@@ -191,7 +186,7 @@ secs_ret time_in_secs(CORE_TICKS ticks) {
 ee_u32 default_num_contexts=MULTITHREAD;
 
 #if (MULTITHREAD>1)
-//static volatile core_results **ppres;
+//static volatile core_results** ppres;
 static volatile core_results* ppres[MULTITHREAD];
 static volatile int setup_results_pointer_complete = 0;
 #endif
