@@ -51,7 +51,7 @@ package paranut_config is
 
     -- - For simulation, values too high (e.g. > 8MB) may result in a non-working simulation for various simulation tools
     -- - For synthesis, this must exactly match your board's main memory size
-    constant CFG_NUT_MEM_SIZE           : natural := 8 * MB;
+    constant CFG_NUT_MEM_SIZE           : natural := 256 * MB;
 
     -- Bus Interface is Little/Big Endian 
     constant CFG_NUT_LITTLE_ENDIAN      : boolean := false;
