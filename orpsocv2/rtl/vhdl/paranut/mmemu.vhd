@@ -123,7 +123,7 @@ begin
         v := r;
         -- To Bank RAM...
         for b in 0 to CFG_MEMU_CACHE_BANKS-1 loop
-            for p in 0 to BR_PORTS-1 loop
+            for p in 0 to CFG_MEMU_BANK_RAM_PORTS-1 loop
                 -- defaults...
                 bri(b).rd(p) <= '0';
                 bri(b).wr(p) <= '0';
@@ -150,18 +150,18 @@ begin
                         end if;
                         bri(b).wdata(p) <= wpco(cpu).bank_data_out;
                     end if;
-                    cpu := cpu + BR_PORTS;
+                    cpu := cpu + CFG_MEMU_BANK_RAM_PORTS;
                 end loop;
             end loop;
             -- eventually link BUSIF to last port...
             if (bifai.gnt_bank(b) = '1') then
                 if (bifo.bank_rd(b) = '1') then
-                    bri(b).rd(BR_PORTS-1) <= '1';
+                    bri(b).rd(CFG_MEMU_BANK_RAM_PORTS-1) <= '1';
                 end if;
                 if (bifo.bank_wr(b) = '1') then
-                    bri(b).wr(BR_PORTS-1) <= '1';
+                    bri(b).wr(CFG_MEMU_BANK_RAM_PORTS-1) <= '1';
                 end if;
-                bri(b).wdata(BR_PORTS-1) <= bifo.data_out(b);
+                bri(b).wdata(CFG_MEMU_BANK_RAM_PORTS-1) <= bifo.data_out(b);
             end if;
             -- from arbiter
             bri(b).wiadr <= ao.wiadr_bank(b);
@@ -177,7 +177,7 @@ begin
         bifi.tag_in <= tro.tag_out(CFG_NUT_CPU_CORES-1);
         -- from BANK RAMs
         for b in 0 to CFG_MEMU_CACHE_BANKS-1 loop
-            bifi.data_in(b) <= bro(b).rdata(BR_PORTS-1);
+            bifi.data_in(b) <= bro(b).rdata(CFG_MEMU_BANK_RAM_PORTS-1);
         end loop;
         -- from read ports...
         for p in 0 to RPORTS-1 loop
@@ -243,7 +243,7 @@ begin
     -- To read ports...
     rp_ic : for p in 0 to RPORTS-1 generate
         rpci(p).tag_in <= tro.tag_out(p mod CFG_NUT_CPU_CORES);
-        rpci(p).bank_data_in <= bro(conv_integer(rpco(p).bank_sel)).rdata((p mod CFG_NUT_CPU_CORES) mod BR_PORTS);
+        rpci(p).bank_data_in <= bro(conv_integer(rpco(p).bank_sel)).rdata((p mod CFG_NUT_CPU_CORES) mod CFG_MEMU_BANK_RAM_PORTS);
         rpbifi(p).busif_data <= r.rp_busif_data;
         --rpbifi(p).busif_data <= bifo.data_out(conv_integer(mi.rpi(p).port_adr(BANK_OF_ADDR_RANGE)));
         rpbifi(p).busif_data_valid <= bifo.data_out_valid;
@@ -254,7 +254,7 @@ begin
     -- To write ports...
     wp_ic : for p in 0 to WPORTS-1 generate
         wpci(p).tag_in <= tro.tag_out(p);
-        wpci(p).bank_data_in <= bro(conv_integer(mi.wpi(p).port_adr(BANK_OF_ADDR_RANGE))).rdata(p mod BR_PORTS);
+        wpci(p).bank_data_in <= bro(conv_integer(mi.wpi(p).port_adr(BANK_OF_ADDR_RANGE))).rdata(p mod CFG_MEMU_BANK_RAM_PORTS);
         wpbifi(p).busif_adr <= bifo.adr_out;
         wpbifi(p).busif_busy <= bifo.busif_busy;
     end generate;
@@ -391,7 +391,7 @@ begin
 
             if (CFG_DBG_BRAM_TRACE) then
                 for b in 0 to CFG_MEMU_CACHE_BANKS-1 loop
-                    for p in 0 to BR_PORTS-1 loop
+                    for p in 0 to CFG_MEMU_BANK_RAM_PORTS-1 loop
                         if (bri_reg(b).rd(p) = '1') then
                             if (CFG_MEMU_CACHE_WAYS_LD > 0) then
                                 INFO("BANKRAM(" & str(b) & ")  read port #" & str(p) &

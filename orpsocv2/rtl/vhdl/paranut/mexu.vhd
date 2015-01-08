@@ -71,6 +71,10 @@ end mexu;
 
 architecture rtl of mexu is
 
+    -- pragma translate_off
+    constant CFG_DBG_INSN_TRACE_CPU_MASK_SLV : std_logic_vector(CFG_NUT_CPU_CORES-1 downto 0) := conv_std_logic_vector(CFG_DBG_INSN_TRACE_CPU_MASK, CFG_NUT_CPU_CORES);
+    -- pragma translate_on
+
     constant GPRS : integer := 32;
     constant GPRS_LD : integer := log2x(GPRS);
     constant LINK_REGISTER : integer := 9; -- R9 is the link register according to the OR1k manual
@@ -1176,7 +1180,7 @@ begin
     generic map (CPU_ID)
     port map (clk, ifuo.ir);
 
-    debug_gen : if (CFG_DBG_INSN_TRACE) generate
+    debug_gen : if (CFG_DBG_INSN_TRACE_CPU_MASK_SLV(CPU_ID) = '1') generate
         disas : orbis32_disas
         generic map (CPU_ID)
         port map (clk, ifuo.ir, ifuo.pc);
@@ -1353,8 +1357,8 @@ begin
                             if (r.d.halt = '1') then
                                 v.mode := "00";
                                 -- pragma translate_off
-                                if (not monitor(CPU_ID).halt) then
-                                    monitor(CPU_ID).halt <= true;
+                                if (not monitor(CPU_ID).halted) then
+                                    monitor(CPU_ID).halted <= true;
                                     INFO("EXU(" & integer'image(CPU_ID) & ") halted.");
                                 end if;
                                 -- pragma translate_on
