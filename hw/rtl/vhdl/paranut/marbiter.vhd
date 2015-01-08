@@ -78,8 +78,8 @@ architecture rtl of marbiter is
     --      is completed, too. This is not necessary, if a line lock is held (i.e. for cache line reading during a write miss).
 
     -- Bank RAMs...
-    -- - All ports of CPU n must be linked to port n % BR_PORTS of each bank RAM.
-    -- - The BUSIF is linked to port #(BR_PORTS-1).
+    -- - All ports of CPU n must be linked to port n % CFG_MEMU_BANK_RAM_PORTS of each bank RAM.
+    -- - The BUSIF is linked to port #(CFG_MEMU_BANK_RAM_PORTS-1).
     -- - Multiple usually conflicting grant signals may be set, if the addresses match.
     -- - As long as a request signal is set, the address must not chage!
     -- - Among write ports and the BUSIF, only one grant will be given to avoid writing conflicts.
@@ -99,7 +99,7 @@ architecture rtl of marbiter is
     constant IDX_WP_OFF : integer := RPORTS;        -- write ports
     constant IDX_IP_OFF : integer := WPORTS;        -- insn read ports
     constant IDX_BUSIF  : integer := RPORTS+WPORTS; -- BusIF port
-    constant RAMPORT_BUSIF : integer := BR_PORTS-1;
+    constant RAMPORT_BUSIF : integer := CFG_MEMU_BANK_RAM_PORTS-1;
 
     constant COUNTER_INIT : std_logic_vector(15 downto 0) := (others => '1');
     constant COUNTER_POLY : std_logic_vector(15 downto 0) := get_prime_poly(16, 0);
@@ -133,11 +133,11 @@ architecture rtl of marbiter is
     end;
 
     function ram_port (i : integer) return integer is
-        variable index : integer range 0 to BR_PORTS-1;
+        variable index : integer range 0 to CFG_MEMU_BANK_RAM_PORTS-1;
     begin
-        index := BR_PORTS-1;
+        index := CFG_MEMU_BANK_RAM_PORTS-1;
         if (i /= IDX_BUSIF) then
-            index := (i mod CFG_NUT_CPU_CORES) mod BR_PORTS;
+            index := (i mod CFG_NUT_CPU_CORES) mod CFG_MEMU_BANK_RAM_PORTS;
         end if;
         return (index);
     end;
@@ -155,11 +155,11 @@ begin
         variable req_tagw, gnt_tagw : std_logic_vector(0 to WPORTS);
         -- BankMethod
         variable req_bank, gnt_bank : read_req_gnt_type;
-        variable sel_wiadr : way_index_addr_vector(0 to BR_PORTS-1);
+        variable sel_wiadr : way_index_addr_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
         variable wiadr : way_index_addr_vector(0 to RPORTS+WPORTS);
         type sel_port_type is array (natural range <>) of integer range 0 to RPORTS+WPORTS;
-        variable sel_port : sel_port_type (0 to BR_PORTS-1);
-        variable sel_port_valid : std_logic_vector(0 to BR_PORTS-1);
+        variable sel_port : sel_port_type (0 to CFG_MEMU_BANK_RAM_PORTS-1);
+        variable sel_port_valid : std_logic_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
         -- BusifMethod
         variable req_busif, gnt_busif : std_logic_vector(0 to RPORTS+WPORTS-1);
         variable i : integer range 0 to CFG_NUT_CPU_CORES-1;
@@ -298,7 +298,7 @@ begin
             --Determine existing & to-keep grants...
             gnt_bank := r.bank(b) and req_bank;
             -- Determine the selected ports...
-            sel_port := (others => BR_PORTS-1);
+            sel_port := (others => CFG_MEMU_BANK_RAM_PORTS-1);
             sel_port_valid := (others => '0');
             for n in 0 to RPORTS+WPORTS loop -- Prio -1: already granted ports
                 if (gnt_bank(n) = '1') then
@@ -329,7 +329,7 @@ begin
             end if;
 
             -- Find selected 'wiadr's & determine all possible grant lines...
-            for p in 0 to BR_PORTS-1 loop
+            for p in 0 to CFG_MEMU_BANK_RAM_PORTS-1 loop
                 if (sel_port_valid(p) = '1') then sel_wiadr(p) := wiadr(sel_port(p));
                 else sel_wiadr(p) := (others => '1'); -- TODO: don't care
                 end if;
@@ -369,7 +369,7 @@ begin
             end loop;
             bifai.gnt_bank(b) <= gnt_bank(IDX_BUSIF);
 
-            for p in 0 to BR_PORTS-1 loop
+            for p in 0 to CFG_MEMU_BANK_RAM_PORTS-1 loop
                 ao.wiadr_bank(b)(p) <= sel_wiadr(p);
             end loop;
         end loop;

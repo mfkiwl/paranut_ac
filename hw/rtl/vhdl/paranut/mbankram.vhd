@@ -43,21 +43,21 @@ architecture rtl of mbankram is
 
 begin
 
-    bram_gen_1p : if BR_PORTS = 1 generate
+    bram_gen_1p : if CFG_MEMU_BANK_RAM_PORTS = 1 generate
         bankram : mem_sync_sp_inferred
         generic map (AWIDTH => CFG_MEMU_CACHE_SETS_LD+CFG_MEMU_CACHE_WAYS_LD,
                      DWIDTH => 32, WRITE_MODE => READ_FIRST)
         port map (clk, bri.wiadr(0), bri.wr(0), bri.wdata(0), bro.rdata(0));
     end generate;
 
-    bram_gen_2p : if BR_PORTS = 2 generate
+    bram_gen_2p : if CFG_MEMU_BANK_RAM_PORTS = 2 generate
         bankram : mem_sync_true_dp_inferred
         generic map (AWIDTH => CFG_MEMU_CACHE_SETS_LD+CFG_MEMU_CACHE_WAYS_LD,
                      DWIDTH => 32, WRITE_MODE_1 => READ_FIRST, WRITE_MODE_2 =>
                      READ_FIRST)
-        port map (clk, clk, bri.wiadr(0), bri.wiadr(BR_PORTS-1), bri.wr(0),
-        bri.wr(BR_PORTS-1), bri.wdata(0), bri.wdata(BR_PORTS-1), bro.rdata(0),
-        bro.rdata(BR_PORTS-1));
+        port map (clk, clk, bri.wiadr(0), bri.wiadr(CFG_MEMU_BANK_RAM_PORTS-1), bri.wr(0),
+        bri.wr(CFG_MEMU_BANK_RAM_PORTS-1), bri.wdata(0), bri.wdata(CFG_MEMU_BANK_RAM_PORTS-1), bro.rdata(0),
+        bro.rdata(CFG_MEMU_BANK_RAM_PORTS-1));
     end generate;
 
 end rtl;

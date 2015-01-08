@@ -36,8 +36,6 @@ use paranut.histogram.all;
 
 package memu_lib is
 
-    constant BR_PORTS : natural range 1 to 2 := 2;
-
     constant TR_PORTS : natural := CFG_NUT_CPU_CORES;
     constant RPORTS   : natural := CFG_NUT_CPU_CORES*2;
     constant WPORTS   : natural := CFG_NUT_CPU_CORES;
@@ -69,7 +67,7 @@ package memu_lib is
     -- | way address | Index address |
     subtype way_index_addr_type is std_logic_vector(CFG_MEMU_CACHE_WAYS_LD+CFG_MEMU_CACHE_SETS_LD-1 downto 0);
     type way_index_addr_vector is array (natural range <>) of way_index_addr_type;
-    type way_index_addr_vector_2 is array (natural range <>) of way_index_addr_vector(0 to BR_PORTS-1);
+    type way_index_addr_vector_2 is array (natural range <>) of way_index_addr_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
 
     function get_way_index_of_addr(addr : TWord; way : std_logic_vector) return std_logic_vector;
 
@@ -113,14 +111,14 @@ package memu_lib is
     -- Bank RAM...
     ----------------------------------------------------------------------------
     type bankram_in_type is record
-        rd    : std_logic_vector(0 to BR_PORTS-1);
-        wr    : std_logic_vector(0 to BR_PORTS-1);
-        wiadr : way_index_addr_vector(0 to BR_PORTS-1);
-        wdata : TWord_Vec(0 to BR_PORTS-1);
+        rd    : std_logic_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
+        wr    : std_logic_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
+        wiadr : way_index_addr_vector(0 to CFG_MEMU_BANK_RAM_PORTS-1);
+        wdata : TWord_Vec(0 to CFG_MEMU_BANK_RAM_PORTS-1);
     end record;
 
     type bankram_out_type is record
-        rdata :  TWord_Vec(0 to BR_PORTS-1);
+        rdata :  TWord_Vec(0 to CFG_MEMU_BANK_RAM_PORTS-1);
     end record;
 
     type bankram_in_vector is array (natural range <>) of bankram_in_type;
