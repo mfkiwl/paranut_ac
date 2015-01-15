@@ -799,6 +799,7 @@ architecture rtl of mexu is
         variable op1 : op1_type := ifuo.ir(31 downto 26);
         variable op2 : op2_type := ifuo.ir(25 downto 21);
         variable op3 : op3_type := ifuo.ir(3 downto 0);
+        variable op4 : op4_type := ifuo.ir(7 downto 6);
         variable width : std_logic_vector(2 downto 0);
         variable d : decode_reg_type;
     begin
@@ -824,7 +825,7 @@ architecture rtl of mexu is
         d.wb_rsel_d := op2;
         rsel_a := (others => '0');
         rsel_b := (others => '0');
-        d.ex_shift_mode := ifuo.ir(7 downto 6);
+        d.ex_shift_mode := op4;
         d.ex_bhw_exts := not ifuo.ir(7);
         d.ex_bhw_sel := ifuo.ir(6);
 
@@ -864,8 +865,10 @@ architecture rtl of mexu is
                             d.ex_op := EX_OP_MUL; d.ex_res_sel := EX_RES_MUL;
                             d.ex_signed := '1';
                         when SHIFT =>
+                            -- SLL, SRA, SRL, ROR
                             d.ex_op := EX_OP_SHIFT; d.ex_res_sel := EX_RES_SHIFT;
                         when others =>
+                            -- ADD, SUB, AND, OR, XOR, EXTBS, EXTBZ, EXTHS, EXTHZ
                             d.ex_op := EX_OP_ALU; d.alu_func := '0' & op3;
                     end case;
                     d.wb_set_reg_d := '1'; d.ex_set_cy_ov := '1'; d.ex_set_f := '0';
