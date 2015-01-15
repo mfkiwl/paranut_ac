@@ -15,7 +15,7 @@
  ****************************************************************************
  */
 
-#include <paranut_hist.h>
+//#include <paranut_hist.h>
 
 #include "dhry.h"
 
@@ -134,7 +134,7 @@ main ()
   /* Start timer */
   /***************/
  
-  pn_hist_enable();
+  //pn_hist_enable();
 
 #ifdef TIMES
   times (&time_info);
@@ -202,7 +202,7 @@ main ()
   End_Time = time ( (long *) 0);
 #endif
 
-  pn_hist_disable();
+  //pn_hist_disable();
 
   printf ("Execution ends\n");
   printf ("\n");
@@ -287,10 +287,10 @@ main ()
     printf ("\n");
   }
   
-  pn_stats_collect();
+  //pn_stats_collect();
   //pn_stats_print();
-  pn_global_stats_collect();
-  pn_global_stats_print();
+  //pn_global_stats_collect();
+  //pn_global_stats_print();
   //pn_print_hist();
 }
 

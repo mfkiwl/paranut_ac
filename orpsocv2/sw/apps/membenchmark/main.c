@@ -22,7 +22,6 @@ extern unsigned long _board_clk_freq;
 
 #include "counter.h"
 #define CTR_BA 0xf0000000
-#define BUS_FREQ_HZ 50000000
 
 static unsigned mem[MEM_SIZE];
 static unsigned rand_table[MEM_SIZE];
@@ -30,7 +29,7 @@ static unsigned rand_table[MEM_SIZE];
 static inline void timer_enable()
 {
 	//or1k_mtspr(SPR_TTMR, SPR_TTMR_CR);
-    counter_init(BUS_FREQ_HZ);
+    counter_init(clk_freq);
 	counter_start(CTR_BA, 0);
 }
 

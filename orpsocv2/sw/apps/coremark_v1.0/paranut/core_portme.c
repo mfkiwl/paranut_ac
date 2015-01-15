@@ -99,8 +99,8 @@ void portable_free(void *p) {
 	#endif
 	#define SAMPLE_TIME_IMPLEMENTATION 1
 #elif MY_TIME
+    extern unsigned long _board_clk_freq;
     #define CTR_BA 0xf0000000
-    #define BUS_FREQ_HZ 25000000
 	#define NSECS_PER_SEC 1000000000
 	#define EE_TIMER_TICKER_RATE 1000
 	#define CORETIMETYPE unsigned int 
@@ -126,7 +126,7 @@ static CORETIMETYPE start_time_val, stop_time_val;
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-    counter_init(BUS_FREQ_HZ);
+    counter_init(_board_clk_freq);
     //counter_set_cnt_div(CTR_BA, pn_get_cpuid(), 16);
 	counter_reset(CTR_BA, pn_get_cpuid());
 	counter_start(CTR_BA, pn_get_cpuid());

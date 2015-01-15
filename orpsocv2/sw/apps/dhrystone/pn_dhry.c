@@ -12,17 +12,18 @@
  *************************************************************************/
 
 #define CTR_BA 0xf0000000
-#define BUS_FREQ_HZ 66000000
 
 #include "dhry.h"
 #include "counter.h"
+
+extern unsigned long _board_clk_freq;
 
 static int init_done = 0;
 
 long time ()
 {
     if (init_done == 0) {
-        counter_init(BUS_FREQ_HZ);
+        counter_init(_board_clk_freq);
         counter_reset(CTR_BA, 0);
         counter_start(CTR_BA, 0);
         init_done = 1;

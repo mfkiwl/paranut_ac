@@ -6,11 +6,12 @@
 #include "counter.h"
 
 #define CTR_BA 0xf0000000
-#define BUS_FREQ_HZ 25000000
 
 // SIZE must be a power of two!
 #define SIZE 0x8000
 #define MAX_NUMBER 10000
+
+extern unsigned long _board_clk_freq;
 
 int a[SIZE];
 int tmp[SIZE];
@@ -71,7 +72,7 @@ int real_main(int cpu_id)
     int i;
 
     if (cpu_id == 0) {
-        counter_init(BUS_FREQ_HZ);
+        counter_init(_board_clk_freq);
         sorted = 1;
         printf("\nGenerating random array of size %d...\n", SIZE);
         for (i = 0; i < SIZE; i++) {

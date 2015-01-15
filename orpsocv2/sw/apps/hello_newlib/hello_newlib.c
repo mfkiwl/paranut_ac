@@ -3,7 +3,8 @@
 #include "counter.h"
 
 #define CTR_BA 0xf0000000
-#define BUS_FREQ_HZ 50000000
+
+extern unsigned long _board_clk_freq;
 
 int main () {
     //or1k_icache_disable();
@@ -20,7 +21,7 @@ int main () {
     *(gpio_dir_reg_adr+2) = 0x00;
 
     //counter_start(CTR_BA);
-    counter_init(BUS_FREQ_HZ);
+    counter_init(_board_clk_freq);
 
     while (1) {
         n = counter_get_msecs(CTR_BA, 0);
