@@ -2,13 +2,26 @@
 
   This file is part of the ParaNut project.
  
-  (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+  (C) 2010-2015 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
   Description:
     This is a SystemC model of the instruction fetch unit (IFU) of the
     ParaNut. The IFU interfaces with the MEMU and the EXU and is capable
     of instruction prefetching.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  *************************************************************************/
 

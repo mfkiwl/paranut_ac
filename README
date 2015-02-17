@@ -1,0 +1,71 @@
+The ParaNut Processor - Source Code Distribution
+================================================
+
+Feb. 17, 2015 - Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+
+This directory tree contains a snapshot of the open source distribution
+of the ParaNut project.
+
+The software is provided “as is”, without warranty of any kind. The
+entire risk as to the quality and performance of the program is with
+you.
+
+ 
+Directory Contents
+------------------
+
+./doc:          Documentation (e.g. Architecture Reference Manual)
+./sysc:         SystemC model
+./hw:           Hardware implementation
+./sw:           Test software for the ParaNut
+
+
+Licensing
+---------
+
+(see license notes in the respective directories / files)
+
+
+Contributors & Contact
+----------------------
+
+Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
+Michael Seider <michael.seider@ftst.de>
+Michael Schaeferling <michael.schaeferling@hs-augsburg.de>
+
+
+
+
+Getting Started
+===============
+
+1. Prerequisites
+----------------
+
+For software compilation:
+- OpenRISC / newlib toolchain: or32-elf-gcc, or32-elf-sim
+  (tested with or32-elf-gcc 4.5.1-or32-1.0rc4)
+
+For the SystemC model:
+- SystemC 2.2 or later
+
+For the VHDL model:
+- ORPSoC v2
+- GHDL / GtkWave for simulation
+- a synthesis tool (tested with Xilinx ISE 14.x)
+- an evaluation board supported by ORPSoC v2
+
+
+2. Running "hello_world" on a ParaNut using the SystemC model
+-------------------------------------------------------------
+
+> # Check and adapt 'sw/hello_newlib/Makefile' and 'sysc/Makefile'
+> cd sysc
+> make hello_newlib
+
+
+3. Running a ParaNut on real hardware
+-------------------------------------
+
+Details on the synthesis and simulation of the VHDL model can be found
+in 'doc/master_thesis-michael_seider.pdf'.
