@@ -717,9 +717,31 @@ SEC '\paranut Extensions\label{sec:is_ref-instructions-paranut}'
 
 #111101 iiiii aaaaa bbbbb i ii iiii iiii         # store conditional
 
-#111110 iiiii aaaaa ---01 i ii iiii iiii         # cache invalidate
-#111110 iiiii aaaaa ---10 i ii iiii iiii         # cache writeback
-#111110 iiiii aaaaa ---11 i ii iiii iiii         # cache flush
+INS p.cinvalidate "Invalidate cache line"
+COD 111110 iiiii aaaaa ---01 i ii iiii iiii
+FMT "p.cinvalidate I(rA)"  # cache invalidate
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache, it is removed from the cache. An eventually modified cache block is not written back."
+#OPE "(None)"
+EXC "TLB miss \\\\ Page fault \\\\ Bus error""
+END
+
+INS p.cwriteback "Write back cache line"
+COD 111110 iiiii aaaaa ---10 i ii iiii iiii
+FMT "p.cwriteback I(rA)"         # cache writeback
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache and modified, it is written back to main memory."
+#OPE "(None)"
+EXC "TLB miss \\\\ Page fault \\\\ Bus error""
+END
+
+INS p.cflush "Flush cache line"
+COD 111110 iiiii aaaaa ---11 i ii iiii iiii
+FMT "p.cflush I(rA)"         # cache flush
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache, it is written back to main memory (if modified) and then removed from the cache."
+#OPE "(None)"
+EXC "TLB miss \\\\ Page fault \\\\ Bus error"
+END
+
+
 
 
 #011100 xxxxx xxxxx xxxxx x xx xxxx xxxx (opt)   l.cust1
