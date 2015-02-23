@@ -4,6 +4,10 @@
 -- Copyright (C) 2013  Michael Seider, Hochschule Augsburg
 -- michael.seider@hs-augsburg.de
 --
+-- Parts of this file are taken from GRLIB VHDL IP LIBRARY
+--  Copyright (C) 2003 - 2008, Gaisler Research
+--  Copyright (C) 2008 - 2013, Aeroflex Gaisler
+--
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
 -- the Free Software Foundation, either version 3 of the License, or
@@ -81,7 +85,6 @@ package body paranut_lib is
         return to_integer(to_unsigned(i, w));
     end;
 
-    -- From GRLIB...
     function notx(d : std_logic_vector) return boolean is
         variable res : boolean;
     begin
@@ -92,7 +95,6 @@ package body paranut_lib is
         return (res);
     end;
 
-    -- From GRLIB...
     function notx(d : std_ulogic) return boolean is
         variable res : boolean;
     begin
@@ -103,7 +105,6 @@ package body paranut_lib is
         return (res);
     end;
 
-    -- From GRLIB...
     function "+" (i : integer; d : std_logic_vector) return std_logic_vector is
         variable x : std_logic_vector(d'length-1 downto 0);
     begin
@@ -117,7 +118,6 @@ package body paranut_lib is
     -- pragma translate_on
     end;
 
-    -- From GRLIB...
     function "+" (d : std_logic_vector; i : integer) return std_logic_vector is
         variable x : std_logic_vector(d'length-1 downto 0);
     begin

@@ -1330,7 +1330,7 @@
 // Define to enable default behavior of cache as write through
 // Turning this off enabled write back statergy
 //
-//`define OR1200_DC_WRITETHROUGH
+`define OR1200_DC_WRITETHROUGH
 
 // Define to enable stores from the stack not doing writethrough.
 // EXPERIMENTAL

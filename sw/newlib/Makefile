@@ -26,5 +26,5 @@ crt0.o: crt0.S
 	or32-elf-gcc -nostartfiles -c -o $@ $<
 
 clean:
-	rm *.a *.o
+	rm -f *.a *.o
 
