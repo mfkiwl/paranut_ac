@@ -51,7 +51,7 @@ For the SystemC model:
 
 For the VHDL model:
 - ORPSoC v2
-- GHDL / GtkWave for simulation
+- GHDL / GtkWave or Xilinx ISim for simulation
 - a synthesis tool (tested with Xilinx ISE 14.x)
 - an evaluation board supported by ORPSoC v2
 
