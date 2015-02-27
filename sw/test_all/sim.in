@@ -1,0 +1,4 @@
+dh 0x700
+break done
+run 10000 hush
+dh 0x700

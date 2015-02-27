@@ -570,7 +570,7 @@ SEC "Control Flow Instructions"
 INS l.j "Jump"
 COD 000000 nnnnn nnnnn nnnnn n nn nnnn nnnn         
 FMT "l.j N"           # jump to exts(4*N)
-DES "The instruction jumps unconditionally with a delay of one instruction. The target adress is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
+DES "The instruction jumps unconditionally with a delay of one instruction. The target address is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
 OPE "PC <- PC + 4 * exts(N)"
 EXC "None"
 END
@@ -578,7 +578,7 @@ END
 INS l.jal "Jump and Link"
 COD 000001 nnnnn nnnnn nnnnn n nn nnnn nnnn         
 FMT "l.jal N"         # jump and link
-DES "The instruction jumps unconditionally with a delay of one instruction, and the address of the instruction after the delay slot is placed into the link register. The target adress is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
+DES "The instruction jumps unconditionally with a delay of one instruction, and the address of the instruction after the delay slot is placed into the link register. The target address is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
 OPE "LR <- PC + 8"
 OP_ "R9 <- PC + 4 * exts(N)"
 EXC "None"
@@ -587,7 +587,7 @@ END
 INS l.bnf "Branch if No Flag"
 COD 000011 nnnnn nnnnn nnnnn n nn nnnn nnnn         
 FMT "l.bnf N"
-DES "If the flag SR[F] is not set, the instruction jumps with a delay of one instruction. The target adress is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
+DES "If the flag SR[F] is not set, the instruction jumps with a delay of one instruction. The target address is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
 OPE "if (SR[F] == 0) PC <- PC + 4 * exts(N)"
 EXC "None"
 END
@@ -595,7 +595,7 @@ END
 INS l.bnf "Branch if Flag"
 COD 000100 nnnnn nnnnn nnnnn n nn nnnn nnnn         
 FMT "l.bf N"
-DES "If the flag SR[F] is set, the instruction jumps with a delay of one instruction. The target adress is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
+DES "If the flag SR[F] is set, the instruction jumps with a delay of one instruction. The target address is determined by adding an immediate constant offset to the current PC, which refers the address of the jump instruction. The immediate offset is determined by multiplying the sign-extended 26-bit immediate value I by 4."
 OPE "if (SR[F] == 1) PC <- PC + 4 * exts(N)"
 EXC "None"
 END
@@ -615,7 +615,7 @@ END
 INS l.jr "Jump Register"
 COD 010001 ----- ----- bbbbb - -- ---- ----         
 FMT "l.jr rB"         # jump register
-DES "The instruction jumps unconditionally with a delay of one instruction. The contents of general-purpose register rB are used as the target adress."
+DES "The instruction jumps unconditionally with a delay of one instruction. The contents of general-purpose register rB are used as the target address."
 OPE "PC <- rB"
 EXC "None"
 END
@@ -623,7 +623,7 @@ END
 INS l.jalr "Jump and Link Register"
 COD 010010 ----- ----- bbbbb - -- ---- ----         
 FMT "l.jalr rB"       # jump and link register
-DES "The instruction jumps unconditionally with a delay of one instruction, and the address of the instruction after the delay slot is placed into the link register. The contents of general-purpose register rB are used as the target adress."
+DES "The instruction jumps unconditionally with a delay of one instruction, and the address of the instruction after the delay slot is placed into the link register. The contents of general-purpose register rB are used as the target address."
 OPE "R9 <- PC + 8"
 OP_ "PC <- rB"
 EXC "None"
@@ -720,23 +720,23 @@ SEC '\paranut Extensions\label{sec:is_ref-instructions-paranut}'
 INS p.cinvalidate "Invalidate cache line"
 COD 111110 iiiii aaaaa ---01 i ii iiii iiii
 FMT "p.cinvalidate I(rA)"  # cache invalidate
-DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache, it is removed from the cache. An eventually modified cache block is not written back."
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective address. If the memory block containing this address is stored in the cache, it is removed from the cache. An eventually modified cache block is not written back."
 #OPE "(None)"
-EXC "TLB miss \\\\ Page fault \\\\ Bus error""
+EXC "TLB miss \\\\ Page fault \\\\ Bus error"
 END
 
 INS p.cwriteback "Write back cache line"
 COD 111110 iiiii aaaaa ---10 i ii iiii iiii
 FMT "p.cwriteback I(rA)"         # cache writeback
-DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache and modified, it is written back to main memory."
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective address. If the memory block containing this address is stored in the cache and modified, it is written back to main memory."
 #OPE "(None)"
-EXC "TLB miss \\\\ Page fault \\\\ Bus error""
+EXC "TLB miss \\\\ Page fault \\\\ Bus error"
 END
 
 INS p.cflush "Flush cache line"
 COD 111110 iiiii aaaaa ---11 i ii iiii iiii
 FMT "p.cflush I(rA)"         # cache flush
-DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective adress. If the memory block containing this adress is stored in the cache, it is written back to main memory (if modified) and then removed from the cache."
+DES "The contents of rA are added to the sign-extended immediate value I to obtain an effective address. If the memory block containing this address is stored in the cache, it is written back to main memory (if modified) and then removed from the cache."
 #OPE "(None)"
 EXC "TLB miss \\\\ Page fault \\\\ Bus error"
 END

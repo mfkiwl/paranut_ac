@@ -896,7 +896,7 @@ Memory Unit (MemU)
  It provides a single bus interface to the main system bus, and independent
  read and write ports for each CPU.
  It is optimized to support parallel accesses by different CPUs.
- In particular, multiple read accesses to the same adress can be served
+ In particular, multiple read accesses to the same address can be served
  in parallel and run no slower than a single access, and accesses to neighboring
  addresses can mostly be served in parallel.
  These two properties are particularly important for the SIMD-like mode.
@@ -1297,8 +1297,8 @@ In Mode
 From a software perspective, the code on a CoPU executes almost normally,
  just like multi-threaded code.
  There is only a single, well-defined exception: Conditional branches and
- jump instructions with variable target adresses are executed based on target
- adress determined by the CePU.
+ jump instructions with variable target addresses are executed based on
+ target address determined by the CePU.
  In the C language, such critical instructions can be generated out of 
 \begin_inset Quotes eld
 \end_inset
@@ -8004,7 +8004,7 @@ If an exception occurs in the CePU, the following steps are performed:
 \end_layout
 
 \begin_layout Enumerate
-The return adress is stored in register EPCR.
+The return address is stored in register EPCR.
  If an instruction causes an exeption, it has either completed (e.
 \begin_inset space ~
 \end_inset
@@ -8016,7 +8016,7 @@ g.
 
 g.
  in the case of a page fault).
- Depending on this, either the adress of the instruction, or its successor
+ Depending on this, either the address of the instruction, or its successor
  are stored.
  Special care has to be taken in the following cases:
 \end_layout
@@ -8024,7 +8024,7 @@ g.
 \begin_deeper
 \begin_layout Itemize
 If the exception is caused by an instruction in a delay slot, either the
- branch target adress (completed instruction) or the address of the branch
+ branch target address (completed instruction) or the address of the branch
  instruction (restartable instruction) is stored in EPCR.
 \end_layout
 
