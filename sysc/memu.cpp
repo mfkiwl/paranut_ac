@@ -1,7 +1,7 @@
 /*************************************************************************
 
   This file is part of the ParaNut project.
- 
+
   (C) 2010-2015 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
@@ -145,6 +145,7 @@ void sc_trace (sc_trace_file *tf, const STagEntry& t, const std::string& name) {
   sc_trace (tf, t.use, name + ".use");
 }
 */
+
 
 void MTagRam::Trace (sc_trace_file *tf, int level) {
   if (!tf || trace_verbose)
@@ -612,7 +613,7 @@ void MBusIf::MainThread () {
         wb_cyc_o = 0;
         wb_we_o = 0;
       }
-  
+
       // Acknowledge...
       for (n = 0; n < CACHE_BANKS; n++) idata_valid_reg[n] = 0;   // disable data forwarding, as from now on this line may be modified in the cache
       busif_busy = 0;
@@ -979,7 +980,7 @@ void MWritePort::MainMethod () {
 
   // Defaults for outputs...
   port_ack = 0;
-  port_wcond_ok = link_valid_reg;
+  port_wcond_ok = link_valid_reg && (link_adr_reg == port_adr);
 
   busif_op = bioNothing;
   busif_nolinelock = 1;
@@ -1170,7 +1171,7 @@ void MWritePort::MainMethod () {
       next_state = s_wp_init;
       break;
 
-      
+
     case s_wp_write_bank: // 10
       req_linelock = 1;
       bank_req_rd = 1;
@@ -1203,7 +1204,7 @@ void MWritePort::MainMethod () {
       req_busif = 1;
       if (gnt_busif == 1) next_state = s_wp_miss;
       break;
-  
+
     case s_wp_recheck: // 13
       // Now we have the BusIf and the line lock, and the BusIf is idle. We must re-check if there is a cache hit now, since
       // some other port may have replaced the cache line in between.
@@ -1212,7 +1213,7 @@ void MWritePort::MainMethod () {
       tagr_req_rd = 1;
       if (gnt_tagr == 1) next_state = s_wp_recheck_read_tag;
       break;
-  
+
     case s_wp_recheck_read_tag: // 14
       // Capture the tag and check it for a cache hit.
       req_busif = 1;
@@ -1227,7 +1228,7 @@ void MWritePort::MainMethod () {
       }
       else next_state = s_wp_replace;
       break;
-  
+
     case s_wp_replace: // 15
       // Start the replacement by the BusIf.
       req_busif = 1;
@@ -1235,7 +1236,7 @@ void MWritePort::MainMethod () {
       busif_op = bioReplace;
       if (busif_busy == 1) next_state = s_wp_replace_wait_busif;
       break;
-  
+
     case s_wp_replace_wait_busif: // 16
       // Wait for the BusIf to complete the replacement.
       req_busif = 1;
@@ -1262,7 +1263,7 @@ void MWritePort::MainMethod () {
       if (busif_busy == 1)
         next_state = s_wp_special_wait_complete;
       break;
-  
+
     case s_wp_special_wait_complete:   // 19
       req_busif = 1;
       req_linelock = 1;
@@ -1272,7 +1273,7 @@ void MWritePort::MainMethod () {
         next_state = s_wp_init;
       }
       break;
-  
+
   }  // switch (state_reg)
 
   // Set derived outputs...

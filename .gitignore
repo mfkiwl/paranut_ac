@@ -5,7 +5,9 @@
 *.so
 *.c.s
 *.log
+*.vcd
 *.geany
+core
 
 doc/src
 
