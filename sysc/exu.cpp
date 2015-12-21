@@ -109,7 +109,7 @@ typedef enum {
   sprEPCR0 = 32,    // EPCR0-EPCR15 - Exception PC registers
   sprEEAR0 = 48,    // EEAR0-EEAR15 - Exception EA registers
   sprESR0 = 64,     // ESR0-ESR15   - Exception SR registers
-  sprGPR0 = 1024    // GPR0-GPR511  - GPRs mapped to SPR space
+  sprGPR0 = 1024,    // GPR0-GPR511  - GPRs mapped to SPR space
 
   // Group 1 (Data MMU)... (group 2 / IMMU decoded into group 1)
   // Group 3 (Data Cache)... (group 4 / ICache decoded into group 3)
@@ -117,6 +117,15 @@ typedef enum {
   // Group 7 (Performance Counters)...
   // Group 9 (Programmable Interrupt Controler)...
   // Group 10 (Tick Timer)...
+  // Group 24 (ParaNut SPR)...
+  sprPNCPUS  = 	0xC000,
+  	//PNCPUID; Blatt daheim, nachher!!!
+  sprPNM2CAP = 	0xC020,
+  sprPNCE 	  = 	0xC040,
+  sprPNLM 	  = 	0xC060,
+  sprPNX 	  = 	0xC080,
+  sprPNXID0  = 	0xC400
+
 } ESpr;
 
 
@@ -182,6 +191,19 @@ TWord MExu::GetSpr (TWord _regNo) {
                1);         // Supervisor Mode (SM)
       //INFOF (("GetSpr: Reading SR: 0x%0x, regICE = %i, regDCE = %i", flags.value (), (int) regICE, (int) regDCE));
       return flags.value();
+	//PNSPR---
+      case sprPNCPUS:
+	return CPU_CORES;
+      case sprPNM2CAP:
+	return CPU_CORES_CAP;
+      case sprPNCE:
+	return regCPUEN;
+      case sprPNLM:
+	return regLM;
+      case sprPNX:
+	return regXT;
+      case sprPNXID0:
+	return regXID; 
     default:
       ERRORF(("SetSpr: Read access to unknown SPR 0x%04x", _regNo));
       assert (false); // unknown SPR
@@ -219,6 +241,12 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
       regICE = val[4];
       regDCE = val[3];
       regIEE = val[2];
+      break;
+    case sprPNCE:
+      regCPUEN = val;
+      break;
+    case sprPNLM:
+      regLM = val;
       break;
     default:
       WARNINGF(("SetSpr: SPR write to read-only register 0x%04x", _regNo));

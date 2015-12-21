@@ -154,6 +154,8 @@ protected:
     regFile[REGISTERS];
   sc_signal<TWord>
     regEPCR, regEEAR, regESR;
+  sc_signale<Tword>		//size??
+    regCPUEN, regLM, regXT, regXID;
   sc_signal<bool>
     regCY, regOV, regF,
     regSUMRA,   // SPR User Mode Read Access
@@ -177,4 +179,5 @@ protected:
 };
 
 
+1;3P
 #endif

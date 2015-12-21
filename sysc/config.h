@@ -31,8 +31,9 @@
 // **************** General options ***********************
 
 
-#define CPU_CORES_LD 0
+#define CPU_CORES_LD 1
 #define CPU_CORES (1 << CPU_CORES_LD)        // 4
+#define CPU_CORES_CAP (1<<0 | 1<<1)		//maybe insert code to make sure no more bits are set than CPUs are available (#if..)
 
 #define MEM_SIZE (32 * MB)
 
