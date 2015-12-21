@@ -1,7 +1,7 @@
 /*************************************************************************
 
   This file is part of the ParaNut project.
- 
+
   (C) 2010-2015 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
@@ -403,7 +403,7 @@ void RunRandomReadWrite (TWord adrRange, int iterations) {    // iterations must
     delete [] adrUsed;
     readableList = new bool[loops];
     for (n = 0; n < loops; n++) readableList[n] = 0;
-  
+
     // Init state...
     writePtr = 0;
     for (n = 0; n < RPORTS; n++) {
@@ -412,11 +412,11 @@ void RunRandomReadWrite (TWord adrRange, int iterations) {    // iterations must
     }
     for (n = 0; n < WPORTS; n++) toWrite[n] = 0;
     done = false;
-  
+
     // Main loop...
     do {
       for (n = 0; n < RPORTS; n++) {
-  
+
         // Handle state actions...
         if (toWait[n] > 0) {   // State is "waiting" (for read or write)
           toWait[n]--;
@@ -475,7 +475,7 @@ void RunRandomReadWrite (TWord adrRange, int iterations) {    // iterations must
         }
       }
       run_cycle ();
-  
+
       // Check if we're done...
       if (writePtr < loops) done = false;
       else {
@@ -484,7 +484,7 @@ void RunRandomReadWrite (TWord adrRange, int iterations) {    // iterations must
         for (n = 0; n < RPORTS; n++) if (toRead[n]) done = false;
       }
     } while (!done);
-  
+
     // Final read run to check that everything was written properly...
     for (n = 0; n < loops; n++) {
       data = Read (0, adrList[n]);
@@ -728,6 +728,7 @@ void RunSpecial (int port, TWord adr, TWord id) {
 
 
 void RunLlSc (TWord adr, TWord id) {
+  // TBD: make more exhaustive tests
 
   // Initialize adress...
   Write (0, adr, id);
@@ -738,6 +739,12 @@ void RunLlSc (TWord adr, TWord id) {
   ASSERT (Read (0, adr) == id);
   wp_rlink_wcond[0] = 0;
 
+  // Perform WC on different adress (should fail) ...
+  wp_rlink_wcond[0] = 1;
+  Write (0, adr+4, id+1);
+  wp_rlink_wcond[0] = 0;
+  ASSERTM (wp_wcond_ok[0] == 0, "'wcond_ok' is set after write-conditional on non-linked adress");
+
   // Perform successful WC...
   wp_rlink_wcond[0] = 1;
   Write (0, adr, id+1);
@@ -745,15 +752,20 @@ void RunLlSc (TWord adr, TWord id) {
   ASSERTM (wp_wcond_ok[0] == 1, "'wcond_ok' not set after successful write-conditional");
   ASSERTM (Read (0, adr) == id+1, "memory not changed after sucessful write-conditional");
 
-  // Perform concurrent write through other port...
-  Write (1, adr, id+2);
+  if (WPORTS < 2)
+    WARNINGF (("  need 2 ports to test failing WC, have only %i: skipping test", WPORTS));
+  else {
 
-  // Perform failing WC...
-  wp_rlink_wcond[0] = 1;
-  Write (0, adr, id+3);
-  wp_rlink_wcond[0] = 0;
-  ASSERTM (wp_wcond_ok[0] == 0, "'wcond_ok' is set after failing write-conditional");
-  ASSERTM (Read (0, adr) == id+2, "memory has changed after failing write-conditional");
+    // Perform concurrent write through other port...
+    Write (1, adr, id+2);
+
+    // Perform failing WC...
+    wp_rlink_wcond[0] = 1;
+    Write (0, adr, id+3);
+    wp_rlink_wcond[0] = 0;
+    ASSERTM (wp_wcond_ok[0] == 0, "'wcond_ok' is set after failing write-conditional");
+    ASSERTM (Read (0, adr) == id+2, "memory has changed after failing write-conditional");
+  }
 }
 
 
@@ -858,7 +870,7 @@ int sc_main (int argc, char *argv []) {
     arg++;
   }
   if (cfgHelp) {
-    puts ("Usage: paranut_tb [<options>] <OR32 ELF file>\n"
+    puts ("Usage: memu_tb [<options>] <OR32 ELF file>\n"
           "\n"
           "Options:\n"
           "  -t<n>: set VCD trace level (0 = no trace file; default = 2)\n"
@@ -915,53 +927,53 @@ int sc_main (int argc, char *argv []) {
   }
 
   // Init trace file...
-  sc_trace_file *tf = sc_create_vcd_trace_file ("memu_tb");
-  trace_file = tf;
+  if (cfgVcdLevel > 0) {
+    sc_trace_file *tf = sc_create_vcd_trace_file ("memu_tb");
 
-  tf->delta_cycles (false);
+    tf->delta_cycles (false);
 
-  TRACE(tf, clk);
-  TRACE(tf, reset);
+    TRACE(tf, clk);
+    TRACE(tf, reset);
 
-  TRACE(tf, wb_stb);
-  TRACE(tf, wb_cyc);
-  TRACE(tf, wb_we);
-  TRACE(tf, wb_ack);
-  TRACE(tf, wb_err);
-  TRACE(tf, wb_rty);
-  TRACE(tf, wb_sel);
-  TRACE(tf, wb_adr);
-  TRACE(tf, wb_dat_w);
-  TRACE(tf, wb_dat_r);
+    TRACE(tf, wb_stb);
+    TRACE(tf, wb_cyc);
+    TRACE(tf, wb_we);
+    TRACE(tf, wb_ack);
+    TRACE(tf, wb_err);
+    TRACE(tf, wb_rty);
+    TRACE(tf, wb_sel);
+    TRACE(tf, wb_adr);
+    TRACE(tf, wb_dat_w);
+    TRACE(tf, wb_dat_r);
 
-  TRACE_BUS(tf, rp_rd, RPORTS);
-  TRACE_BUS(tf, rp_direct, RPORTS);
-  TRACE_BUS(tf, rp_ack, RPORTS);
-  TRACE_BUS(tf, rp_bsel, RPORTS);
-  TRACE_BUS(tf, rp_adr, RPORTS);
-  TRACE_BUS(tf, rp_data, RPORTS);
+    TRACE_BUS(tf, rp_rd, RPORTS);
+    TRACE_BUS(tf, rp_direct, RPORTS);
+    TRACE_BUS(tf, rp_ack, RPORTS);
+    TRACE_BUS(tf, rp_bsel, RPORTS);
+    TRACE_BUS(tf, rp_adr, RPORTS);
+    TRACE_BUS(tf, rp_data, RPORTS);
 
-  TRACE_BUS(tf, wp_wr, WPORTS);
-  TRACE_BUS(tf, wp_direct, WPORTS);
-  TRACE_BUS(tf, wp_bsel, WPORTS);
-  TRACE_BUS(tf, wp_ack, WPORTS);
-  TRACE_BUS(tf, wp_rlink_wcond, WPORTS);
-  TRACE_BUS(tf, wp_wcond_ok, WPORTS);
-  TRACE_BUS(tf, wp_writeback, WPORTS);
-  TRACE_BUS(tf, wp_invalidate, WPORTS);
-  TRACE_BUS(tf, wp_adr, WPORTS);
-  TRACE_BUS(tf, wp_data, WPORTS);
+    TRACE_BUS(tf, wp_wr, WPORTS);
+    TRACE_BUS(tf, wp_direct, WPORTS);
+    TRACE_BUS(tf, wp_bsel, WPORTS);
+    TRACE_BUS(tf, wp_ack, WPORTS);
+    TRACE_BUS(tf, wp_rlink_wcond, WPORTS);
+    TRACE_BUS(tf, wp_wcond_ok, WPORTS);
+    TRACE_BUS(tf, wp_writeback, WPORTS);
+    TRACE_BUS(tf, wp_invalidate, WPORTS);
+    TRACE_BUS(tf, wp_adr, WPORTS);
+    TRACE_BUS(tf, wp_data, WPORTS);
 
-  memu.Trace (tf, cfgVcdLevel);
-  //memu.Trace (NULL, 2);
-  //memu.writePorts[0]->Trace (NULL);
+    memu.Trace (tf, cfgVcdLevel);
+
+    trace_file = tf;
+  }
 
   // Run simulation...
   sc_start (SC_ZERO_TIME);
-
   RunTest (&memory);
 
-  sc_close_vcd_trace_file (tf);
-
+  // Finish...
+  if (trace_file) sc_close_vcd_trace_file (trace_file);
   return 0;
 }

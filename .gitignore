@@ -3,5 +3,21 @@
 *.[oa]
 *.la
 *.so
+*.c.s
 *.log
+*.vcd
+*.geany
+core
 
+doc/src
+
+sysc/paranut_tb
+sysc/memu_tb
+
+sw/test_all/test_all
+sw/test_all/uart0.?x
+sw/hello_newlib/hello_newlib
+
+sw/dhrystone/dhry
+sw/dhrystone/dhry-amd64
+sw/coremark_v1.0/coremark.exe

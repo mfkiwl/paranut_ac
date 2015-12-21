@@ -1,7 +1,7 @@
 /*************************************************************************
 
   This file is part of the ParaNut project.
- 
+
   (C) 2010-2015 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
@@ -319,11 +319,11 @@ int MExu::RunAlu (sc_uint<32> insn, EAluFunc aluFunc, EAluASrc aSrc, EAluBSrc bS
       else signedB = -('0', inB);
       result = ('0', inA) + signedB;
       if (aluFunc == afAdc) result += regCY;
-  
+
       outRegD = result.range (31, 0);
       outCY = result [32];
       outOV = (inA[31] & signedB[31] & ~outRegD[31]) | (~inA[31] & ~signedB[31] & outRegD[31]);
-  
+
       // compute comparison flag 'outFlag'...
       zero = (outRegD == 0);
       if (d[3]) lt = (outCY & !(inA[31] ^ inB[31])) | (inA[31] & !inB[31]);   // "less than" for signed comparison
@@ -699,7 +699,7 @@ void MExu::MainThread () {
         switch (insn.range (15, 0)) {
           case 0x0001:    // HALT
             // INFO ("HALT instruction received.");
-	    mode = 0;
+            mode = 0;
             while (true) wait ();
             break;
           case 0x0004:    // outbyte

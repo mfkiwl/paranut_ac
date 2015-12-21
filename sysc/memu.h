@@ -1,7 +1,7 @@
 /*************************************************************************
 
   This file is part of the ParaNut project.
- 
+
   (C) 2010-2013 Gundolf Kiefer <gundolf.kiefer@hs-augsburg.de>
       Hochschule Augsburg, University of Applied Sciences
 
@@ -51,8 +51,6 @@
    To-Do (TBD)
    -----
 
-   - support remaining WP operations (invalidate, flush, ...)
-   - support load-link / store-conditional (or other sync. primitives?) -> MWritePort
    - (EXAMINE: priority: RD/RI/WD per core, not global?  -> starvation may occur if global)
    - (optimize BusIf: reset 'busy' before WB write-back -> does not really help)
 */
