@@ -118,13 +118,13 @@ typedef enum {
   // Group 9 (Programmable Interrupt Controler)...
   // Group 10 (Tick Timer)...
   // Group 24 (ParaNut SPR)...
-  sprPNCPUS  = 	0xC000,
-  	//PNCPUID; Blatt daheim, nachher!!!
-  sprPNM2CAP = 	0xC020,
+  sprPNCPUS	  = 	0xC000,
+  sprPNLID 	  = 	0xC010,
+  sprPNM2CAP	  = 	0xC020,
   sprPNCE 	  = 	0xC040,
   sprPNLM 	  = 	0xC060,
   sprPNX 	  = 	0xC080,
-  sprPNXID0  = 	0xC400
+  sprPNXID	  = 	0xC400
 
 } ESpr;
 
@@ -148,6 +148,21 @@ TWord MExu::GetSpr (TWord _regNo) {
   }
   else if (regNo >= sprGPR0 && regNo <= sprGPR0+511) {    // GPR0-GPR511  - GPRs mapped to SPR space
     ERROR(("GetSpr: GPRs not supported / should be handled by main controler"));
+  }
+  else if(regNo >= sprPNM2CAP && regNo <= sprPNM2CAP+31){
+    return CPU_CORES_CAP;
+  }
+  else if(regNo >= sprPNCE && regNo <= sprPNCE+31){
+    return regCPUEN[regNo-sprPNCE];
+  }
+  else if(regNo >= sprPNLM && regNo <= sprPNLM+31){
+    return regLM[regNo-sprPNLM];
+  }
+  else if(regNo >= sprPNX && regNo <= sprPNX+31){
+    return regXT[regNo-sprPNX];
+  }
+  else if(regNo >= sprPNXID && regNo <= sprPNXID+1023){
+    return regXID[regNo-sprPNXID]; 
   }
   else switch (regNo) {
     case sprVR:
@@ -191,19 +206,10 @@ TWord MExu::GetSpr (TWord _regNo) {
                1);         // Supervisor Mode (SM)
       //INFOF (("GetSpr: Reading SR: 0x%0x, regICE = %i, regDCE = %i", flags.value (), (int) regICE, (int) regDCE));
       return flags.value();
-	//PNSPR---
-      case sprPNCPUS:
-	return CPU_CORES;
-      case sprPNM2CAP:
-	return CPU_CORES_CAP;
-      case sprPNCE:
-	return regCPUEN;
-      case sprPNLM:
-	return regLM;
-      case sprPNX:
-	return regXT;
-      case sprPNXID0:
-	return regXID; 
+    case sprPNCPUS:
+      return CPU_CORES;
+    case sprPNLID:
+      return regLCID;
     default:
       ERRORF(("SetSpr: Read access to unknown SPR 0x%04x", _regNo));
       assert (false); // unknown SPR
@@ -216,7 +222,6 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
   sc_uint<32> val = _val;
 
   //INFOF (("SetSpr: Writing 0x%x to SPR 0x%x", _val, _regNo));
-
   if (regNo >= sprEPCR0 && regNo <= sprEPCR0+15) {        // EPCR0-EPCR15 - Exception PC registers
     WARNING(("SetSpr: SPR write to EPCRn - against specification"));
     regEPCR = val;
@@ -230,6 +235,12 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
   else if (regNo >= sprGPR0 && regNo <= sprGPR0+511) {    // GPR0-GPR511  - GPRs mapped to SPR space
     ERROR(("SetSpr: GPRs not supported / should be handled by main controller"));
   }
+  else if(regNo >= sprPNCE && regNo <= sprPNCE+31){
+    regCPUEN[regNo-sprPNCE] = val;
+  }
+  else if(regNo >= sprPNLM && regNo <= sprPNLM+31){
+    regLM[regNo-sprPNLM] = val;
+  }
   else switch (regNo) {
     case sprSR:            // SR        - Supervision register
       //INFOF (("SetSpr: Setting SR to 0x%0x, regICE = %i, regDCE = %i", (int) val, (int) val[4], (int) val[3]));
@@ -241,12 +252,6 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
       regICE = val[4];
       regDCE = val[3];
       regIEE = val[2];
-      break;
-    case sprPNCE:
-      regCPUEN = val;
-      break;
-    case sprPNLM:
-      regLM = val;
       break;
     default:
       WARNINGF(("SetSpr: SPR write to read-only register 0x%04x", _regNo));
