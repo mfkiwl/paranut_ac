@@ -231,9 +231,9 @@ void MParanut::InitSubmodules () {
   for (n = 0; n < CPU_CORES; n++) {
     sprintf (name, "EXU%i", n);
     if (n == 0)
-      exu[n] = new MExu (name, true, 3);    // CePU
+      {exu[n] = new MExu (name, true, 3, n);INFOF(("CePU\n"));}    // CePU
     else
-      exu[n] = new MExu (name, false, 2);   // CoPUs
+      {exu[n] = new MExu (name, false, 2, n);INFOF(("CoPU\n"));}   // CoPUs
 
     exu[n]->clk (clk_i);
     exu[n]->reset (rst_i);
@@ -261,6 +261,9 @@ void MParanut::InitSubmodules () {
     exu[n]->lsu_adr (lsu_adr[n]);
     exu[n]->lsu_rdata (lsu_rdata[n]);
     exu[n]->lsu_wdata (lsu_wdata[n]);
+
+    exu[n]->lsu_rlink_wcond (lsu_rlink_wcond[n]);
+    exu[n]->lsu_wcond_ok (lsu_wcond_ok[n]);
   }
   //   Special CePU signals...
   exu[0]->icache_enable(icache_enable);

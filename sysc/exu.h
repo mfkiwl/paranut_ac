@@ -30,6 +30,7 @@
 #define _EXU_
 
 #include "base.h"
+#include "config.h"
 
 #include <systemc.h>
 
@@ -40,6 +41,7 @@
 
 
 #define LINK_REGISTER 9    // R9 is the link register according to the OR1k manual
+
 
 
 typedef enum {
@@ -84,8 +86,10 @@ typedef enum {
 // **************** MExu ************************
 
 
+
 SC_MODULE(MExu) {
 public:
+
 
   // Ports ...
   sc_in<bool> clk, reset;
@@ -95,6 +99,7 @@ public:
   sc_out<TWord> ifu_jump_adr;   // jump adress
   sc_in<bool> ifu_ir_valid, ifu_npc_valid;
   sc_in<TWord> ifu_ir, ifu_ppc, ifu_pc, ifu_npc;   // expected to be registered (fast) outputs
+	//TODO confirm that pc is the signal containing the actual adress (/use pc or npc?)
 
   //   to Load/Store Unit (LSU)...
   sc_out<bool> lsu_rd, lsu_wr, lsu_flush, lsu_cache_invalidate, lsu_cache_writeback;
@@ -104,6 +109,8 @@ public:
   sc_out<TWord> lsu_adr;
   sc_in<TWord> lsu_rdata;
   sc_out<TWord> lsu_wdata;
+  sc_in<bool> lsu_wcond_ok;
+  sc_out<bool> lsu_rlink_wcond;
 
   //   controller outputs...
   sc_port<sc_signal_out_if<bool>,1,SC_ZERO_OR_MORE_BOUND> icache_enable, dcache_enable;
@@ -112,7 +119,7 @@ public:
 
   // Constructor...
   SC_HAS_PROCESS (MExu);
-  MExu (sc_module_name name, bool _inCePU, int _modeCap) : sc_module (name) {
+  MExu (sc_module_name name, bool _inCePU, int _modeCap, int _localID) : sc_module (name) {
     // '_inCePU' indicates whether the surrounding CPU is the CePU.
     // '_modeCap' indicates the maximum mode suppported.
     // The (only) possible combinations of ('_inCePU', '_modeCap') are:
@@ -128,6 +135,9 @@ public:
 
     inCePU = _inCePU;
     modeCap = _modeCap;
+    localID = _localID;
+    INFOF(("LocalID: %i", localID));
+
   }
 
   // Functions...
@@ -148,14 +158,17 @@ protected:
   // Configuration ...
   bool inCePU;
   int modeCap;
+  int localID;
 
   // CPU registers...
   sc_signal<TWord>
     regFile[REGISTERS];
   sc_signal<TWord>
     regEPCR, regEEAR, regESR;
-  sc_signal<TWord>		//size??
-    regLCID, regCPUEN[32], regLM[32], regXT[32], regXID[1024];
+  sc_signal<TWord>
+    regCPUEN[32], regLM[32], regXT[32], regXID[1024];
+  sc_signal<TWord>
+    regIFUADR;		//next adress from IFU
   sc_signal<bool>
     regCY, regOV, regF,
     regSUMRA,   // SPR User Mode Read Access

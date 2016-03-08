@@ -115,7 +115,8 @@ void MLsu::OutputMethod () {
   rp_rd = 0;
   rp_adr = adr & ~3;
 
-  wp_rlink_wcond = 0;
+  //wp_rlink_wcond = 0;	//does this overwrite? was it just set because connection was not established yet?
+  wp_rlink_wcond = rlink_wcond;
   wp_writeback = 0;
   wp_invalidate = 0;
 
@@ -195,6 +196,7 @@ void MLsu::OutputMethod () {
     ack = 1;
 
   // Generate MEMU write port signals ...
+  wcond_ok = wp_wcond_ok;
   wp_adr = wbuf_adr[0];
   wp_data = wbuf_data[0];
   wp_bsel = wbuf_valid[0];

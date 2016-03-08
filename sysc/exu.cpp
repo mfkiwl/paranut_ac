@@ -30,7 +30,6 @@
 
 
 
-
 // **************** Tracing *********************
 
 
@@ -63,6 +62,9 @@ void MExu::Trace (sc_trace_file *tf, int level) {
   TRACE (tf, lsu_adr);
   TRACE (tf, lsu_rdata);
   TRACE (tf, lsu_wdata);
+  TRACE (tf, lsu_rlink_wcond);
+  TRACE (tf, lsu_wcond_ok);
+
 
   // Registers...
   TRACE_BUS (tf, regFile, REGISTERS);
@@ -120,11 +122,11 @@ typedef enum {
   // Group 24 (ParaNut SPR)...
   sprPNCPUS	  = 	0xC000,
   sprPNLID 	  = 	0xC010,
-  sprPNM2CAP	  = 	0xC020,
-  sprPNCE 	  = 	0xC040,
-  sprPNLM 	  = 	0xC060,
-  sprPNX 	  = 	0xC080,
-  sprPNXID	  = 	0xC400
+  sprPNM2CAP0	  = 	0xC020,
+  sprPNCE0	  = 	0xC040,
+  sprPNLM0 	  = 	0xC060,
+  sprPNX0 	  = 	0xC080,
+  sprPNXID0	  = 	0xC400
 
 } ESpr;
 
@@ -149,20 +151,23 @@ TWord MExu::GetSpr (TWord _regNo) {
   else if (regNo >= sprGPR0 && regNo <= sprGPR0+511) {    // GPR0-GPR511  - GPRs mapped to SPR space
     ERROR(("GetSpr: GPRs not supported / should be handled by main controler"));
   }
-  else if(regNo >= sprPNM2CAP && regNo <= sprPNM2CAP+31){
+  else if(regNo >= sprPNM2CAP0 && regNo <= sprPNM2CAP0+31 && localID == 0){
     return CPU_CORES_CAP;
   }
-  else if(regNo >= sprPNCE && regNo <= sprPNCE+31){
-    return regCPUEN[regNo-sprPNCE];
+  else if(regNo >= sprPNCE0 && regNo <= sprPNCE0+31 && localID == 0){
+    return regCPUEN[regNo-sprPNCE0];
   }
-  else if(regNo >= sprPNLM && regNo <= sprPNLM+31){
-    return regLM[regNo-sprPNLM];
+  else if(regNo >= sprPNLM0 && regNo <= sprPNLM0+31 && localID == 0){
+    return regLM[regNo-sprPNLM0];
   }
-  else if(regNo >= sprPNX && regNo <= sprPNX+31){
-    return regXT[regNo-sprPNX];
+  else if(regNo >= sprPNX0 && regNo <= sprPNX0+31 && localID == 0){
+    return regXT[regNo-sprPNX0];
   }
-  else if(regNo >= sprPNXID && regNo <= sprPNXID+1023){
-    return regXID[regNo-sprPNXID]; 
+  else if(regNo >= sprPNXID0 && regNo <= sprPNXID0+1023 && localID == 0){
+    return regXID[regNo-sprPNXID0]; 
+  }
+  else if(regNo == sprPNCPUS && localID == 0){
+      return CPU_CORES;
   }
   else switch (regNo) {
     case sprVR:
@@ -206,13 +211,11 @@ TWord MExu::GetSpr (TWord _regNo) {
                1);         // Supervisor Mode (SM)
       //INFOF (("GetSpr: Reading SR: 0x%0x, regICE = %i, regDCE = %i", flags.value (), (int) regICE, (int) regDCE));
       return flags.value();
-    case sprPNCPUS:
-      return CPU_CORES;
     case sprPNLID:
-      return regLCID;
+      return localID;
     default:
-      ERRORF(("SetSpr: Read access to unknown SPR 0x%04x", _regNo));
-      assert (false); // unknown SPR
+      WARNINGF(("SetSpr: Read access to unknown SPR 0x%04x", _regNo));
+//      assert (false); // unknown SPR
   }
 }
 
@@ -235,11 +238,12 @@ void MExu::SetSpr (TWord _regNo, TWord _val) {
   else if (regNo >= sprGPR0 && regNo <= sprGPR0+511) {    // GPR0-GPR511  - GPRs mapped to SPR space
     ERROR(("SetSpr: GPRs not supported / should be handled by main controller"));
   }
-  else if(regNo >= sprPNCE && regNo <= sprPNCE+31){
-    regCPUEN[regNo-sprPNCE] = val;
+  else if(regNo >= sprPNCE0 && regNo <= sprPNCE0+31 && localID == 0){
+    regIFUADR = ifu_npc;		//TODO confirm this
+    regCPUEN[regNo-sprPNCE0] = val;
   }
-  else if(regNo >= sprPNLM && regNo <= sprPNLM+31){
-    regLM[regNo-sprPNLM] = val;
+  else if(regNo >= sprPNLM0 && regNo <= sprPNLM0+31 && localID == 0){
+    regLM[regNo-sprPNLM0] = val;
   }
   else switch (regNo) {
     case sprSR:            // SR        - Supervision register
@@ -471,6 +475,7 @@ void MExu::DumpRegisterInfo () {
 
 
 void MExu::MainThread () {
+INFOF(("Starting MainThread"));
   sc_uint<32> insn;
   int opcode, delay;
   EAluFunc aluFunc;
@@ -491,11 +496,28 @@ void MExu::MainThread () {
   regDCE = 0;  // disable data caching
   regIEE = 0;  // disable interrupts
 
+//INFOF(("LocalID: %i", localID));
+/*
+  if(inCePU){
+      regCPUEN[0] = (1<<0);
+INFOF(("regCPUEN: %i", (uint32_t)regCPUEN[0]));
+      for(int i = 1; i < CPU_CORES; i++){
+	INFOF(("first CPUEN: %i, localID: %i", (uint32_t)regCPUEN[0], localID));
+	regCPUEN[i/32] = regCPUEN[i/32] & (~(1<<(i%32)));
+	INFOF(("second CPUEN: %i, localID: %i", (uint32_t)regCPUEN[0], localID));
+
+      }
+  }else{
+    wait(CPU_CORES+1);
+  }
+*/
+INFOF(("about to enter main-loop"));
   // Main loop...
   while (true) {
-    regFile[0] = 0;   // R0 is always zero
 
     // wait (1);
+
+    regFile[0] = 0;   // R0 is always zero
 
     // preset control signals ...
     ifu_next = 0;
@@ -507,6 +529,31 @@ void MExu::MainThread () {
     lsu_cache_writeback = 0;
 
     wait (1);  // to let the current IFU outputs propagate to this EXU...
+
+
+//INFOF(("mode_b: %i, localID: %i", mode, localID));
+    mode = regCPUEN[localID/32] & (1<<(localID%32)) || (int)inCePU;
+/*if(!inCePU)
+{
+//INFOF(("CoPU"));
+if(mode != 0)
+	INFOF(("mode: %i", mode));
+if(regCPUEN[0] != 0)
+	INFOF(("CPE: %i", (int)regCPUEN[0]));
+}*/
+//if(regCPUEN[0] != 0 && mode == 0)
+  //INFOF(("regCPUEN: %i", (int)regCPUEN[0]));
+//else
+//      INFOF(("valid"));
+
+//INFOF(("mode_a: %i, localID: %i", mode, localID));
+
+//mode = 1;
+INFOF(("CPE: %i, localID: %i",(int) regCPUEN[0], localID));
+
+    if(mode == 0)
+      continue;
+
 
     if (ifu_ir_valid == 1) {
 
@@ -627,6 +674,68 @@ void MExu::MainThread () {
         ifu_next = 1;
         wait (1);
       }
+
+//|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+	else if (opcode == 0x1B){
+INFOF (("load-linked"));
+        // (LS) Load-Link...
+        sc_uint<2> width = 0b00;   
+        bool signExt = !(opcode & 1);
+        TWord data, adr;
+
+        perfMon.Count (evLoad);
+
+        //   calculate adress & set LSU signals...
+        delay = RunAlu (insn, afAdd, aaReg, abImm16s, 0, 0, 0, &adr);
+        if (delay > 1) wait (delay - 1);
+	lsu_rlink_wcond = 1;
+        lsu_adr = adr;
+        lsu_width = width;
+        lsu_exts = signExt;
+        lsu_rd = 1;
+        //   wait for ACK...
+        while (lsu_ack == 0) wait (1);
+        lsu_rd = 0;
+//        INFOF (("Load-link (%08x) = %08x    SP/R1 = %08x", adr, lsu_rdata.read (), regFile[1].read ())); //MAKRo, load-> ll
+        ifu_next = 1;
+        wait (1);
+        //   read & write back result (were delayed)...
+        regFile [insn.range(25, 21)] = lsu_rdata;
+      }
+      else if (opcode == 0x33) {
+INFOF (("store-conditional"));
+        // (LS) Store-Conditional...
+        sc_uint<2> width = 0b00;
+        TWord adr;
+
+        perfMon.Count (evStore);
+
+        //   calculate adress & set LSU signals...
+        delay = RunAlu (insn, afAdd, aaReg, abImm162s, 0, 0, 0, &adr);
+        if (delay > 1) wait (delay - 1);
+        lsu_adr = adr;
+
+	if(lsu_wcond_ok)
+{
+        lsu_wdata = regFile [insn.range(15, 11)];
+        lsu_width = width;
+
+        lsu_wr = 1;
+        //   wait for ACK...
+        while (lsu_ack == 0) wait (1);
+        lsu_wr = 0;
+	regF = 1;
+//INFOF(("Flag_Set\n"));
+	}else{
+//INFOF(("FLAG_N_S\n"));
+	regF = 0;
+}        // INFOF (("Store (%08x) = %08x   SP/R1 = %08x", adr, regFile [insn.range(15, 11)].read (), regFile[1].read ()));
+        ifu_next = 1;
+        wait (1);
+      }
+
+//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       else if (opcode == 0x3e) {
         // (LS, ParaNut extension) Cache control...
@@ -791,4 +900,5 @@ void MExu::MainThread () {
     }   // if (exceptId > 0)
 
   }  // while (true)
+INFOF(("left main-loop"));
 }
